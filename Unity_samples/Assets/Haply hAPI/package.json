@@ -1,0 +1,34 @@
+{
+  "name": "co.haply.hapi.unity",
+  "displayName": "Haply hAPI for Unity",
+  "version": "0.0.4",
+  "unity": "2020.2",
+  "type": "library",
+  "category": "Haptics",
+  "keywords": [
+    "Haply",
+    "tAPI",
+    "haptic",
+    "haptics"
+  ],
+  "description": "Haply's tAPI powers the creation of haptic-enabled experiences that leverage our industry-leading hardware and development tools. This package extends the tAPI's standard C# client with productivity, performance, and QOL features carefully designed to complement Unity's existing workflows.",
+  "samples": [
+    {
+      "displayName": "Pantograph",
+      "description": "Getting started samples for a pantograph device.",
+      "path": "Samples~/Pantograph"
+    }
+  ],
+  "repository": {
+    "url": "https://gitlab.com/Haply/hAPI.git#Unity",
+    "type": "git",
+    "revision": "8d22e5568d012db4a9fb05aaeef7b87e18cdcb69"
+  },
+  "author": "Haply Robotics, Inc.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/Haply/hAPI/issues"
+  },
+  "homepage": "https://2diy.haply.co/",
+  "hideInEditor": false
+}
