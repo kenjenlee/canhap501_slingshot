@@ -19,6 +19,7 @@ public class SolarSystem : MonoBehaviour
         celestials = GameObject.FindGameObjectsWithTag("Celestial");
 
         SetInitialVelocity();
+
     }
 
     // Update is called once per frame
@@ -31,12 +32,14 @@ public class SolarSystem : MonoBehaviour
     {
         foreach (GameObject a in celestials)
         {
+            
             foreach (GameObject b in celestials)
             {
                 if(!a.Equals(b))
                 {
                     float m2 = b.GetComponent<Rigidbody>().mass;
                     float r = Vector3.Distance(a.transform.position, b.transform.position);
+                    Debug.Log($"distance: {r} ");
 
                     a.transform.LookAt(b.transform);
 
@@ -68,8 +71,10 @@ public class SolarSystem : MonoBehaviour
                     float m1 = a.GetComponent<Rigidbody>().mass;
                     float m2 = b.GetComponent<Rigidbody>().mass;
                     float r = Vector3.Distance(a.transform.position, b.transform.position);
+                    Vector3 force = (b.transform.position - a.transform.position).normalized * (G * (m1 * m2) / (r * r));
+                    //Debug.Log($"Force: {force}");
+                    a.GetComponent<Rigidbody>().AddForce(force);
 
-                    a.GetComponent<Rigidbody>().AddForce((b.transform.position - a.transform.position).normalized * (G * (m1 * m2) / (r * r)));
                 }
             }
         }
