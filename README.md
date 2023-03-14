@@ -1,1 +1,0 @@
-# canhap501_slingshot
