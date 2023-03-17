@@ -37,14 +37,21 @@ public class Slingshot : MonoBehaviour
     private SpriteRenderer m_EndEffectorAvatar;
 
     [SerializeField]
+    private SpriteRenderer m_EndEffectorStartAvatar;
+
+    private SpriteRenderer m_CurrentEndEffectorAvatar;
+
+    [SerializeField]
     private SpriteRenderer m_WallAvatar;
 
     [SerializeField]
     private SpriteRenderer m_EndEffectorArrowAvatar;
 
-    [Space]
-    [SerializeField]
-    private Vector2 m_WorldSize = new Vector2(0.25f, 0.15f);
+    //[Space]
+    //[SerializeField]
+    //private Vector2 m_WorldSize = new Vector2(0.25f, 0.2f);
+    private Vector2 m_WorldSize = new Vector2(0.55f, 0.4f);
+    private float m_DeviceToGraphicsFactor = 1f;
 
     [Space]
     [SerializeField]
@@ -56,8 +63,10 @@ public class Slingshot : MonoBehaviour
     [SerializeField]
     private Vector2 m_WallAdditionalForce = new Vector2(0f, 50000f);
 
-    [SerializeField]
-    private Vector2 m_WallPosition = new Vector2(0.05f, 0f);
+    //[SerializeField]
+    private Vector2 m_WallPosition = new Vector2(-.35f, 0f);
+
+    private float m_InitialSpaceshipXPosition = -.38f;
 
     // private Vector2 m_WallPosition = new Vector2( 0f, 0.1f );
 
@@ -93,6 +102,8 @@ public class Slingshot : MonoBehaviour
     private Vector2 m_ReleasedForce = new Vector2(0f, 0f);
     private bool m_JustReleased = true;
 
+    private bool m_IsCameraDynamic = true;
+
     ////////  Planet stuff  ////////
     public const float G = 6.67e-11f;
     public const float mass_earth = 333000.0f;
@@ -106,7 +117,7 @@ public class Slingshot : MonoBehaviour
     private GameObject m_Moon;
 
     [SerializeField]
-    private bool isTethered;
+    private bool m_IsTethered;
     private float m_EarthDistance = 0.0f;
     private Vector2 m_EarthForce = new Vector2(0f, 0f);
     private Vector2 m_EffectorPosition = new Vector2(0f, 0f);
@@ -132,12 +143,11 @@ public class Slingshot : MonoBehaviour
     {
         m_ConcurrentDataLock = new object();
         m_InitialArrowScale = m_EndEffectorArrowAvatar.transform.localScale;
+        GameManager.OnGameStateChanged += OnGameStateChanged;
     }
 
     private void Start()
     {
-        var camera = Camera.main;
-
         Debug.Log($"Screen.width: {Screen.width}");
 
         Application.targetFrameRate = 60;
@@ -169,55 +179,28 @@ public class Slingshot : MonoBehaviour
 
         StartCoroutine(StepCountTimer());
 
-        Camera.main.transform.position = new Vector3(0f, -m_WorldSize.y / 2f, -10f);
-        m_Background.transform.position = new Vector3(
-            0f,
-            -m_WorldSize.y / 2f - m_EndEffectorRadius,
-            1f
-        );
-        m_Background.transform.localScale = new Vector3(m_WorldSize.x, m_WorldSize.y, 1f);
-
-        m_EndEffectorAvatar.transform.localScale = new Vector3(
-            m_EndEffectorRadius,
-            m_EndEffectorRadius,
-            1f
-        );
-
-        var wallPosition = DeviceToGraphics(new float[2] { m_WallPosition.x, m_WallPosition.y });
-        Debug.Log($"{wallPosition[0]} {wallPosition[1]}");
-
-        if (m_WallOrientation == WallOrientation.Horizontal)
-        {
-            // horizontal wall
-            m_WallAvatar.transform.position = new Vector3(wallPosition[0], wallPosition[1], 0f);
-            m_WallAvatar.transform.localScale = new Vector3(m_WorldSize.x, m_EndEffectorRadius, 1f);
-        }
-        else if (m_WallOrientation == WallOrientation.Vertical)
-        {
-            // vertical wall
-            m_WallAvatar.transform.localScale = new Vector3(m_EndEffectorRadius, m_WorldSize.y, 1f);
-            m_WallAvatar.transform.position = new Vector3(
-                wallPosition[0],
-                wallPosition[1] - m_WorldSize.y / 2f - m_EndEffectorRadius,
-                0f
-            );
-            m_SlingshotRope.StartPoint.position = new Vector3(
-                wallPosition[0],
-                wallPosition[1] - m_WorldSize.y - m_EndEffectorRadius,
-                0f
-            );
-            m_SlingshotRope.EndPoint.position = new Vector3(wallPosition[0], wallPosition[1], 0f);
-        }
-        else
-            Debug.LogError($"Only vertical or horizontal walls supported");
-
-        ////////  Planet stuff  ////////
+        ////////  planet stuff  ////////
         SetInitialVelocity();
+
+        
     }
 
     private void Update()
     {
         Gravity();
+        if(Input.GetKey(KeyCode.T))
+        {
+            m_IsTethered = !m_IsTethered;
+        } else if(Input.GetKey(KeyCode.C))
+        {
+            m_IsCameraDynamic = !m_IsCameraDynamic;
+            if(!m_IsCameraDynamic)
+            {
+                Camera.main.transform.position = new Vector3(0f
+                    , -m_WorldSize.y / 2f
+                    , -20f);
+            }
+        }
     }
     
     private IEnumerator StepCountTimer()
@@ -240,10 +223,112 @@ public class Slingshot : MonoBehaviour
     }
     #endregion
 
+    private void OnGameStateChanged(GameState s)
+    {
+        if(s == GameState.Freemovement)
+        {
+            m_CurrentEndEffectorAvatar = m_EndEffectorStartAvatar;
+            m_EndEffectorStartAvatar.enabled = true;
+            m_EndEffectorAvatar.enabled = true;
+            EngineFire_Left.SetActive(false);
+            EngineFire_Right.SetActive(false);
+            EngineFire_Up.SetActive(false);
+            EngineFire_Down.SetActive(false);
+
+            //m_WorldSize.x = 0.4f;
+            //m_WorldSize.y = 0.4f;
+            m_DeviceToGraphicsFactor = 5f;
+
+            //Camera.main.transform.position = new Vector3(0f, -m_WorldSize.y / 2f, -10f);
+            Camera.main.transform.position = new Vector3(0f
+                    , -m_WorldSize.y / 2f
+                    , -20f);
+
+            m_Background.transform.position = new Vector3(
+                0f,
+                -m_WorldSize.y / 2f - m_EndEffectorRadius,
+                1f
+            );
+            m_Background.transform.localScale = new Vector3(m_WorldSize.x, m_WorldSize.y, 1f);
+
+            m_EndEffectorAvatar.transform.localScale = new Vector3(
+                m_EndEffectorRadius,
+                m_EndEffectorRadius,
+                1f
+            );
+
+            m_EndEffectorAvatar.transform.position = new Vector3(
+                m_InitialSpaceshipXPosition
+                , -m_WorldSize.y / 2f - m_EndEffectorRadius
+                , 0f);
+
+            m_EndEffectorStartAvatar.transform.localScale = new Vector3(
+                m_EndEffectorRadius,
+                m_EndEffectorRadius,
+                1f
+            );
+
+            ////////  wall stuff  ////////
+            //var wallPosition = DeviceToGraphics(new float[2] { m_WallPosition.x, m_WallPosition.y });
+            //Debug.Log($"{wallPosition[0]} {wallPosition[1]}");
+            //var wallPosition = new Vector2(m_WallPosition.x, m_WallPosition.y);
+            //Debug.Log($"{wallPosition[0]} {wallPosition[1]}");
+
+            if (m_WallOrientation == WallOrientation.Horizontal)
+            {
+                // horizontal wall
+                //m_WallAvatar.transform.position = new Vector3(wallPosition[0], wallPosition[1], 0f);
+                //m_WallAvatar.transform.localScale = new Vector3(m_WorldSize.x, m_EndEffectorRadius, 1f);
+            }
+            else if (m_WallOrientation == WallOrientation.Vertical)
+            {
+                // vertical wall
+                m_WallAvatar.transform.localScale = new Vector3(m_EndEffectorRadius, m_WorldSize.y, 1f);
+                m_WallAvatar.transform.position = new Vector3(
+                    m_WallPosition[0],
+                    m_WallPosition[1] - m_WorldSize.y / 2f - m_EndEffectorRadius,
+                    0f
+                );
+                m_SlingshotRope.StartPoint.position = new Vector3(
+                    //wallPosition[0],
+                    //wallPosition[1] - m_WorldSize.y - m_EndEffectorRadius,
+                    m_WallPosition[0],
+                    m_WallPosition[1] - m_WorldSize.y - m_EndEffectorRadius,
+                    0f
+                );
+                //m_SlingshotRope.EndPoint.position = new Vector3(wallPosition[0], wallPosition[1], 0f);
+                m_SlingshotRope.EndPoint.position = new Vector3(m_WallPosition[0], m_WallPosition[1], 0f);
+            }
+
+        }
+        else if(s == GameState.Slingshot)
+        {
+            m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
+            m_EndEffectorStartAvatar.enabled = false;
+            m_EndEffectorAvatar.enabled = true;
+            
+           
+        }
+        else if (s == GameState.Released)
+        {
+            m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
+            m_EndEffectorStartAvatar.enabled = false;
+            m_EndEffectorAvatar.enabled = true;
+        }
+        else
+            Debug.LogError($"Only vertical or horizontal walls supported");
+    }
+
     #region Drawing
     private void LateUpdate()
     {
         UpdateEndEffector();
+        if(m_IsCameraDynamic)
+        {
+            Camera.main.transform.position = new Vector3(m_CurrentEndEffectorAvatar.transform.position.x
+                , m_CurrentEndEffectorAvatar.transform.position.y
+                , -10f);
+        }
         m_Frames++;
     }
 
@@ -303,7 +388,7 @@ public class Slingshot : MonoBehaviour
                     m_EffectorPosition = new Vector2(m_EndEffectorPosition[0], m_EndEffectorPosition[1]);
                     Vector2 gravity_force = new Vector2(0.0f, 0.0f);
 
-                    if (!isTethered)    {
+                    if (!m_IsTethered)    {
                         gravity_force = ((new Vector2(0.0f, 0.0f) - m_EffectorPosition).normalized * (G * (mass_earth * mass_moon) / (m_EarthDistance*m_EarthDistance)));
                         m_EndEffectorForce[0] = 1000*gravity_force[0];
                         m_EndEffectorForce[1] = 1000*gravity_force[1];
@@ -379,8 +464,11 @@ public class Slingshot : MonoBehaviour
     /// </summary>
     private void OnDestroy()
     {
-        m_WidgetOne.SetDeviceTorques(new float[2] { 0f, 0f }, m_Torques);
-        m_WidgetOne.DeviceWriteTorques();
+        lock (m_ConcurrentDataLock)
+        {
+            m_WidgetOne.SetDeviceTorques(new float[2] { 0f, 0f }, m_Torques);
+            m_WidgetOne.DeviceWriteTorques();
+        }
     }
     #endregion
 
@@ -411,7 +499,8 @@ public class Slingshot : MonoBehaviour
     #region Utilities
     private void UpdateEndEffector()
     {
-        var position = m_EndEffectorAvatar.transform.position;
+        //var position = m_EndEffectorAvatar.transform.position;
+        var position = new Vector3();
 
         lock (m_ConcurrentDataLock)
         {
@@ -421,53 +510,67 @@ public class Slingshot : MonoBehaviour
 
         //position *= m_WorldSize.x / 0.24f;
 
-        m_EndEffectorAvatar.transform.position = position;
+        m_CurrentEndEffectorAvatar.transform.position = position;
 
         // float m = Mathf.Max(1.0f, CalculateMagnitude(m_EndEffectorForce));
         // m_EndEffectorArrowAvatar.transform.localScale = Vector3.Scale(
         //     m_InitialArrowScale,
         //     new Vector3(1, m, 1)
         // );
-        if(LastPos_x + 0.001 < position.x)
+
+        if(GameManager.GetState() == GameState.Freemovement)
         {
-            EngineFire_Left.SetActive(true);
+            if(position.x <= m_InitialSpaceshipXPosition)
+            {
+                GameManager.UpdateGameState(GameState.Slingshot);
+            }
+        }
+        else
+        {
+            if (LastPos_x + 0.001 < position.x)
+            {
+                EngineFire_Left.SetActive(true);
+            }
+
+            else if (LastPos_x == position.x)
+            {
+                EngineFire_Left.SetActive(false);
+                EngineFire_Right.SetActive(false);
+            }
+
+            else if (LastPos_x - 0.001 > position.x)
+            {
+                EngineFire_Right.SetActive(true);
+            }
+
+
+            if (LastPos_y - 0.001 > position.y)
+            {
+                EngineFire_Up.SetActive(true);
+            }
+
+            else if (LastPos_y == position.y)
+            {
+                EngineFire_Up.SetActive(false);
+                EngineFire_Down.SetActive(false);
+            }
+
+            else if (LastPos_y + 0.001 < position.y)
+            {
+                EngineFire_Down.SetActive(true);
+            }
+
+            LastPos_x = position.x;
+            LastPos_y = position.y;
         }
 
-        else if(LastPos_x == position.x)
-        {
-            EngineFire_Left.SetActive(false);
-            EngineFire_Right.SetActive(false);
-        }
-
-        else if (LastPos_x - 0.001 > position.x)
-        {
-            EngineFire_Right.SetActive(true);
-        }
-
-
-        if(LastPos_y - 0.001 > position.y)
-        {
-            EngineFire_Up.SetActive(true);
-        }
-
-        else if(LastPos_y == position.y)
-        {
-            EngineFire_Up.SetActive(false);
-            EngineFire_Down.SetActive(false);
-        }
-
-        else if(LastPos_y + 0.001 < position.y)
-        {
-            EngineFire_Down.SetActive(true);
-        }
-
-        LastPos_x = position.x;
-        LastPos_y = position.y;
+        
     }
 
     private float[] DeviceToGraphics(float[] position)
     {
-        return new float[] { -position[0], -position[1] };
+        return new float[] { -position[0] * m_DeviceToGraphicsFactor
+            , -position[1] * m_DeviceToGraphicsFactor };
     }
 
     private float CalculateMagnitude(float[] num)
