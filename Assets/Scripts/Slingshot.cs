@@ -102,8 +102,6 @@ public class Slingshot : MonoBehaviour
     private Vector2 m_ReleasedForce = new Vector2(0f, 0f);
     private bool m_JustReleased = true;
 
-    private bool m_IsCameraDynamic = true;
-
     ////////  Planet stuff  ////////
     public const float G = 6.67e-11f;
     public const float mass_earth = 333000.0f;
@@ -137,6 +135,15 @@ public class Slingshot : MonoBehaviour
 
     [SerializeField]
     private GameObject EngineFire_Down;
+
+    ////////  Camera stuff ////////
+    private bool m_IsCameraDynamic = true;
+
+    [SerializeField]
+    private float m_CameraStaticSize = .5f;
+
+    [SerializeField]
+    private float m_CameraDynamicSize = 0.15f;
 
     #region Setup
     private void Awake()
@@ -199,6 +206,11 @@ public class Slingshot : MonoBehaviour
                 Camera.main.transform.position = new Vector3(0f
                     , -m_WorldSize.y / 2f
                     , -20f);
+                Camera.main.orthographicSize = m_CameraStaticSize;
+            }
+            else
+            {
+                Camera.main.orthographicSize = m_CameraDynamicSize;
             }
         }
     }
@@ -243,6 +255,13 @@ public class Slingshot : MonoBehaviour
             Camera.main.transform.position = new Vector3(0f
                     , -m_WorldSize.y / 2f
                     , -20f);
+
+            Camera.main.orthographicSize = m_IsCameraDynamic ?
+                m_CameraDynamicSize : m_CameraStaticSize;
+            Debug.Log(m_IsCameraDynamic);
+            Debug.Log(m_CameraDynamicSize);
+            Debug.Log(m_CameraStaticSize);
+            Debug.Log(Camera.main.orthographicSize);
 
             m_Background.transform.position = new Vector3(
                 0f,

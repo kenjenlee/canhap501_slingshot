@@ -326,6 +326,8 @@ MonoBehaviour:
   EngineFire_Right: {fileID: 2065647851}
   EngineFire_Up: {fileID: 665625660}
   EngineFire_Down: {fileID: 594231852}
+  m_CameraStaticSize: 0.5
+  m_CameraDynamicSize: 0.15
 --- !u!1 &55298842
 GameObject:
   m_ObjectHideFlags: 0
