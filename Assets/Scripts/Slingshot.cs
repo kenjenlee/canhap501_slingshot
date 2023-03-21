@@ -85,6 +85,8 @@ public class Slingshot : MonoBehaviour
 
     private float[] m_EndEffectorPosition;
     private float[] m_EndEffectorForce;
+    private float m_EndEffectorHorizontalThrustForce = 0f;
+    private float m_EndEffectorVerticalThrustForce = 0f;
 
     private bool m_RenderingForce;
 
@@ -101,11 +103,17 @@ public class Slingshot : MonoBehaviour
 
     private Vector2 m_ReleasedForce = new Vector2(0f, 0f);
     private bool m_JustReleased = true;
+    private bool m_DecoupleEndEffectorFromAvatar = false;
+    private bool m_FiringThrusters = false;
+    private float m_anchorPointX = 0f;
+    private float m_anchorPointY = 0f;
+    private float m_thrusterStiffness = 1f;
 
     ////////  Planet stuff  ////////
     public const float G = 6.67e-11f;
     public const float mass_earth = 333000.0f;
     public const float mass_moon = 1.0f;
+    public const float mass_ship = 20f;
     GameObject[] celestials;
 
     [SerializeField]
@@ -113,6 +121,9 @@ public class Slingshot : MonoBehaviour
 
     [SerializeField]
     private GameObject m_Moon;
+
+    [SerializeField]
+    private GameObject m_Destination;
 
     [SerializeField]
     private bool m_IsTethered;
@@ -184,6 +195,7 @@ public class Slingshot : MonoBehaviour
 
         m_SimulationLoopTask.Start();
 
+
         StartCoroutine(StepCountTimer());
 
         ////////  planet stuff  ////////
@@ -212,6 +224,15 @@ public class Slingshot : MonoBehaviour
             {
                 Camera.main.orthographicSize = m_CameraDynamicSize;
             }
+        }
+        if (Input.GetKey(KeyCode.F))    {
+            m_FiringThrusters = true;
+            m_anchorPointX = m_EndEffectorPosition[0];
+            m_anchorPointY = m_EndEffectorPosition[1];
+        } else if (Input.GetKey(KeyCode.S)) {
+            m_FiringThrusters = false;
+            m_anchorPointX = 0f;
+            m_anchorPointY = 0f;
         }
     }
     
@@ -249,7 +270,7 @@ public class Slingshot : MonoBehaviour
 
             //m_WorldSize.x = 0.4f;
             //m_WorldSize.y = 0.4f;
-            m_DeviceToGraphicsFactor = 5f;
+            m_DeviceToGraphicsFactor = 6f;
 
             //Camera.main.transform.position = new Vector3(0f, -m_WorldSize.y / 2f, -10f);
             Camera.main.transform.position = new Vector3(0f
@@ -330,12 +351,15 @@ public class Slingshot : MonoBehaviour
         }
         else if (s == GameState.Released)
         {
+            //m_DeviceToGraphicsFactor = 1f; // Reduce the amount the end effector moves to provide more convincing thruster physics
+            m_EndEffectorAvatar.transform.position = m_EndEffectorStartAvatar.transform.position;
             m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
             m_EndEffectorStartAvatar.enabled = false;
             m_EndEffectorAvatar.enabled = true;
+            m_DecoupleEndEffectorFromAvatar = true;
         }
         else
-            Debug.LogError($"Only vertical or horizontal walls supported");
+            Debug.Log($"Game Over!");
     }
 
     #region Drawing
@@ -409,8 +433,8 @@ public class Slingshot : MonoBehaviour
 
                     if (!m_IsTethered)    {
                         gravity_force = ((new Vector2(0.0f, 0.0f) - m_EffectorPosition).normalized * (G * (mass_earth * mass_moon) / (m_EarthDistance*m_EarthDistance)));
-                        m_EndEffectorForce[0] = 1000*gravity_force[0];
-                        m_EndEffectorForce[1] = 1000*gravity_force[1];
+                        m_EndEffectorForce[0] = 400*gravity_force[0];
+                        m_EndEffectorForce[1] = 400*gravity_force[1];
                     }
                     else    {
                         m_EndEffectorForce[0] = -500*m_EarthForce[0];
@@ -454,12 +478,26 @@ public class Slingshot : MonoBehaviour
                 {
                     if (m_JustReleased)
                     {
-                        m_JustReleased = false;
-                        m_ReleasedForce[0] = m_EndEffectorForce[0];
-                        m_ReleasedForce[1] = m_EndEffectorForce[1];
+                        //m_JustReleased = false;
+                        // m_ReleasedForce[0] = m_EndEffectorForce[0];
+                        // m_ReleasedForce[1] = m_EndEffectorForce[1];
                         // m_EndEffectorForce[0] = m_ReleasedForce[0];
                         // m_EndEffectorForce[1] = m_ReleasedForce[1];
+                        m_EndEffectorForce[0] = 0f;
+                        m_EndEffectorForce[1] = 0f;
                     }
+
+                    if (m_FiringThrusters)  {
+                        // When thrusters are fired, only render the force caused by them
+                        m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
+                        m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
+                    }
+                    else    {
+                        m_EndEffectorForce[0] = 0f;
+                        m_EndEffectorForce[1] = 0f;
+                    }
+
+                    Debug.Log("End effector (x, y): (" + m_EndEffectorPosition[0] + ", " + m_EndEffectorPosition[1] + ")");
                 }
                 else
                 {
@@ -508,6 +546,21 @@ public class Slingshot : MonoBehaviour
             (m_Earth.transform.position - m_Moon.transform.position).normalized
             * (G * (mass_earth * mass_moon) / (r * r));
         m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
+        if (GameManager.GetState() == GameState.Released)   {
+            // We want the spaceship to move under the influence of gravity
+            r = Vector2.Distance(m_Earth.transform.position, m_CurrentEndEffectorAvatar.transform.position);
+            Vector2 m_EarthShipForce = (m_Earth.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_earth * mass_ship) / (r * r));
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_EarthShipForce);
+            // The moon also has gravitational influence on the ship
+            r = Vector2.Distance(m_Moon.transform.position, m_CurrentEndEffectorAvatar.transform.position);
+            Vector2 m_MoonShipForce = ( m_Moon.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_moon * mass_ship) / (r * r));
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_MoonShipForce);
+            // If the ship has just been released, a small force is applied towards the right
+            if (m_JustReleased) {
+                m_JustReleased = false;
+                m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2 (5f, 0));
+            }
+        }
         // Debug.Log(r);
         // Debug.Log((m_Earth.transform.position - m_Moon.transform.position).normalized);
         // Debug.Log((G * (mass_earth * mass_moon) / (r * r)));
@@ -528,8 +581,15 @@ public class Slingshot : MonoBehaviour
         }
 
         //position *= m_WorldSize.x / 0.24f;
-
-        m_CurrentEndEffectorAvatar.transform.position = position;
+        if (GameManager.GetState() != GameState.Released)
+            m_CurrentEndEffectorAvatar.transform.position = position;
+        else if (GameManager.GetState() == GameState.Released && m_FiringThrusters) {
+            // when released, we want the avatar to move by an amount proportional to the change in position of the end effector
+            float deltaX = position.x - LastPos_x;
+            float deltaY = position.y - LastPos_y;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(20 * new Vector2(deltaX, 0f));
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(20 * new Vector2(0f, deltaY));
+        }
 
         // float m = Mathf.Max(1.0f, CalculateMagnitude(m_EndEffectorForce));
         // m_EndEffectorArrowAvatar.transform.localScale = Vector3.Scale(
@@ -544,7 +604,7 @@ public class Slingshot : MonoBehaviour
                 GameManager.UpdateGameState(GameState.Slingshot);
             }
         }
-        else
+        else if (GameManager.GetState() == GameState.Released && m_FiringThrusters)
         {
             if (LastPos_x + 0.001 < position.x)
             {
@@ -579,10 +639,18 @@ public class Slingshot : MonoBehaviour
                 EngineFire_Down.SetActive(true);
             }
 
-            LastPos_x = position.x;
-            LastPos_y = position.y;
-        }
+            m_EndEffectorHorizontalThrustForce = m_thrusterStiffness * (position.x - m_anchorPointX);
+            m_EndEffectorVerticalThrustForce = m_thrusterStiffness * (position.y - m_anchorPointY);
 
+            if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.005)   {
+                Debug.Log("Game Won!");
+                GameManager.UpdateGameState(GameState.GameWon);
+            }
+
+            
+        }
+        LastPos_x = position.x;
+        LastPos_y = position.y;
         
     }
 
