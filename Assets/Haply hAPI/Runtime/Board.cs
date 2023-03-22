@@ -37,7 +37,7 @@ namespace Haply.hAPI
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
                 port = new SerialPort( m_WindowsComPort, m_BaudRate );
 #else
-		        port = new SerialPort("/dev/cu.usbmodem11401", m_BaudRate);
+		        port = new SerialPort(m_MacComPort, m_BaudRate);
 #endif
                 port.ReadTimeout = m_SerialTimeout;
                 port.WriteTimeout = m_SerialTimeout;

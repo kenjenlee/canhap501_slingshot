@@ -491,13 +491,16 @@ public class Slingshot : MonoBehaviour
                         // When thrusters are fired, only render the force caused by them
                         m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
                         m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
+
+                        m_EndEffectorHorizontalThrustForce = 5f;
+                        m_EndEffectorVerticalThrustForce = 5;
                     }
                     else    {
                         m_EndEffectorForce[0] = 0f;
                         m_EndEffectorForce[1] = 0f;
                     }
 
-                    Debug.Log("End effector (x, y): (" + m_EndEffectorPosition[0] + ", " + m_EndEffectorPosition[1] + ")");
+                    //Debug.Log("End effector (x, y): (" + m_EndEffectorPosition[0] + ", " + m_EndEffectorPosition[1] + ")");
                 }
                 else
                 {
@@ -540,21 +543,24 @@ public class Slingshot : MonoBehaviour
 
     private void Gravity()
     {
-        Debug.Log("Computing Gravity...\n");
+        //Debug.Log("Computing Gravity...\n");
         float r = Vector2.Distance(m_Earth.transform.position, m_Moon.transform.position);
         m_EarthForce =
             (m_Earth.transform.position - m_Moon.transform.position).normalized
             * (G * (mass_earth * mass_moon) / (r * r));
         m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
         if (GameManager.GetState() == GameState.Released)   {
+            
             // We want the spaceship to move under the influence of gravity
             r = Vector2.Distance(m_Earth.transform.position, m_CurrentEndEffectorAvatar.transform.position);
             Vector2 m_EarthShipForce = (m_Earth.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_earth * mass_ship) / (r * r));
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_EarthShipForce);
+
             // The moon also has gravitational influence on the ship
             r = Vector2.Distance(m_Moon.transform.position, m_CurrentEndEffectorAvatar.transform.position);
             Vector2 m_MoonShipForce = ( m_Moon.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_moon * mass_ship) / (r * r));
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_MoonShipForce);
+
             // If the ship has just been released, a small force is applied towards the right
             if (m_JustReleased) {
                 m_JustReleased = false;
@@ -606,7 +612,7 @@ public class Slingshot : MonoBehaviour
         }
         else if (GameManager.GetState() == GameState.Released && m_FiringThrusters)
         {
-            if (LastPos_x + 0.001 < position.x)
+            if (LastPos_x + 0.009 < position.x)
             {
                 EngineFire_Left.SetActive(true);
             }
@@ -617,13 +623,13 @@ public class Slingshot : MonoBehaviour
                 EngineFire_Right.SetActive(false);
             }
 
-            else if (LastPos_x - 0.001 > position.x)
+            else if (LastPos_x - 0.009 > position.x)
             {
                 EngineFire_Right.SetActive(true);
             }
 
 
-            if (LastPos_y - 0.001 > position.y)
+            if (LastPos_y - 0.009 > position.y)
             {
                 EngineFire_Up.SetActive(true);
             }
@@ -634,7 +640,7 @@ public class Slingshot : MonoBehaviour
                 EngineFire_Down.SetActive(false);
             }
 
-            else if (LastPos_y + 0.001 < position.y)
+            else if (LastPos_y + 0.009 < position.y)
             {
                 EngineFire_Down.SetActive(true);
             }
