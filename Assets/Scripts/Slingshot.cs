@@ -2,9 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Jobs;
 using UnityEngine;
 using Haply.hAPI;
 using Haply.hAPI.Samples;
+
 
 using TimeSpan = System.TimeSpan;
 using Stopwatch = System.Diagnostics.Stopwatch;
@@ -167,8 +169,10 @@ public class Slingshot : MonoBehaviour
     private void Start()
     {
         Debug.Log($"Screen.width: {Screen.width}");
-
+        celestials = GameObject.FindGameObjectsWithTag("Celestial");
         Application.targetFrameRate = 60;
+
+        
 
         m_HaplyBoard.Initialize();
 
@@ -195,25 +199,24 @@ public class Slingshot : MonoBehaviour
 
         m_SimulationLoopTask.Start();
 
-
+        
         StartCoroutine(StepCountTimer());
 
         ////////  planet stuff  ////////
         SetInitialVelocity();
-
-        
     }
-
-    private void Update()
+    
+    private void FixedUpdate()
     {
         Gravity();
-        if(Input.GetKey(KeyCode.T))
+        if (Input.GetKey(KeyCode.T))
         {
             m_IsTethered = !m_IsTethered;
-        } else if(Input.GetKey(KeyCode.C))
+        }
+        else if (Input.GetKey(KeyCode.C))
         {
             m_IsCameraDynamic = !m_IsCameraDynamic;
-            if(!m_IsCameraDynamic)
+            if (!m_IsCameraDynamic)
             {
                 Camera.main.transform.position = new Vector3(0f
                     , -m_WorldSize.y / 2f
@@ -225,11 +228,14 @@ public class Slingshot : MonoBehaviour
                 Camera.main.orthographicSize = m_CameraDynamicSize;
             }
         }
-        if (Input.GetKey(KeyCode.F))    {
+        if (Input.GetKey(KeyCode.F))
+        {
             m_FiringThrusters = true;
             m_anchorPointX = m_EndEffectorPosition[0];
             m_anchorPointY = m_EndEffectorPosition[1];
-        } else if (Input.GetKey(KeyCode.S)) {
+        }
+        else if (Input.GetKey(KeyCode.S))
+        {
             m_FiringThrusters = false;
             m_anchorPointX = 0f;
             m_anchorPointY = 0f;
@@ -279,10 +285,10 @@ public class Slingshot : MonoBehaviour
 
             Camera.main.orthographicSize = m_IsCameraDynamic ?
                 m_CameraDynamicSize : m_CameraStaticSize;
-            Debug.Log(m_IsCameraDynamic);
-            Debug.Log(m_CameraDynamicSize);
-            Debug.Log(m_CameraStaticSize);
-            Debug.Log(Camera.main.orthographicSize);
+            //Debug.Log(m_IsCameraDynamic);
+            //Debug.Log(m_CameraDynamicSize);
+            //Debug.Log(m_CameraStaticSize);
+            //Debug.Log(Camera.main.orthographicSize);
 
             m_Background.transform.position = new Vector3(
                 0f,
@@ -497,7 +503,7 @@ public class Slingshot : MonoBehaviour
                         m_EndEffectorForce[1] = 0f;
                     }
 
-                    Debug.Log("End effector (x, y): (" + m_EndEffectorPosition[0] + ", " + m_EndEffectorPosition[1] + ")");
+                    //Debug.Log("End effector (x, y): (" + m_EndEffectorPosition[0] + ", " + m_EndEffectorPosition[1] + ")");
                 }
                 else
                 {
@@ -533,34 +539,65 @@ public class Slingshot : MonoBehaviour
     private void SetInitialVelocity()
     {
         Debug.Log("Setting Initial Velocity...\n");
-        float r = Vector2.Distance(m_Earth.transform.position, m_Moon.transform.position);
-        m_Moon.GetComponent<Rigidbody2D>().velocity +=
-            (Vector2)m_Moon.transform.right * Mathf.Sqrt((G * mass_earth) / r);
+        foreach(GameObject i in celestials)
+        {
+            Debug.Log(i.name);
+            foreach (GameObject j in celestials)
+            {
+                if (!i.Equals(j))
+                {
+                    float j_mass = j.GetComponent<Rigidbody2D>().mass;
+                    float r = Vector2.Distance(i.transform.position, j.transform.position);
+                    Vector2 vel = (Vector2)i.transform.right * Mathf.Sqrt((G * j_mass) / r);
+                    Debug.Log(vel.y);
+                    i.GetComponent<Rigidbody2D>().velocity += vel;
+                        
+                }
+            }
+            
+        }
+        //float r = Vector2.Distance(m_Earth.transform.position, m_Moon.transform.position);
+        //m_Moon.GetComponent<Rigidbody2D>().velocity +=
+        //    (Vector2)m_Moon.transform.right * Mathf.Sqrt((G * mass_earth) / r);
     }
 
     private void Gravity()
     {
-        Debug.Log("Computing Gravity...\n");
-        float r = Vector2.Distance(m_Earth.transform.position, m_Moon.transform.position);
-        m_EarthForce =
-            (m_Earth.transform.position - m_Moon.transform.position).normalized
-            * (G * (mass_earth * mass_moon) / (r * r));
-        m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
-        if (GameManager.GetState() == GameState.Released)   {
-            // We want the spaceship to move under the influence of gravity
-            r = Vector2.Distance(m_Earth.transform.position, m_CurrentEndEffectorAvatar.transform.position);
-            Vector2 m_EarthShipForce = (m_Earth.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_earth * mass_ship) / (r * r));
-            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_EarthShipForce);
-            // The moon also has gravitational influence on the ship
-            r = Vector2.Distance(m_Moon.transform.position, m_CurrentEndEffectorAvatar.transform.position);
-            Vector2 m_MoonShipForce = ( m_Moon.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_moon * mass_ship) / (r * r));
-            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_MoonShipForce);
-            // If the ship has just been released, a small force is applied towards the right
-            if (m_JustReleased) {
-                m_JustReleased = false;
-                m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2 (5f, 0));
+        //Debug.Log("Computing Gravity...\n");
+        foreach (GameObject i in celestials)
+        {
+            foreach (GameObject j in celestials)
+            {
+                if (!i.Equals(j))
+                {
+                    float i_mass = i.GetComponent<Rigidbody2D>().mass;
+                    float j_mass = j.GetComponent<Rigidbody2D>().mass;
+                    float r = Vector2.Distance(i.transform.position, j.transform.position);
+                    Vector2 force = (j.transform.position - i.transform.position).normalized * (G * (j_mass * i_mass) / (r * r));
+                    i.GetComponent<Rigidbody2D>().AddForce((Vector2)force);
+                }
             }
         }
+        //float r = Vector2.Distance(m_Earth.transform.position, m_Moon.transform.position);
+        //m_EarthForce =
+        //    (m_Earth.transform.position - m_Moon.transform.position).normalized
+        //    * (G * (mass_earth * mass_moon) / (r * r));
+        //m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
+        //if (GameManager.GetState() == GameState.Released)   {
+        //    // We want the spaceship to move under the influence of gravity
+        //    r = Vector2.Distance(m_Earth.transform.position, m_CurrentEndEffectorAvatar.transform.position);
+        //    Vector2 m_EarthShipForce = (m_Earth.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_earth * mass_ship) / (r * r));
+        //    m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_EarthShipForce);
+        //    // The moon also has gravitational influence on the ship
+        //    r = Vector2.Distance(m_Moon.transform.position, m_CurrentEndEffectorAvatar.transform.position);
+        //    Vector2 m_MoonShipForce = ( m_Moon.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_moon * mass_ship) / (r * r));
+        //    m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_MoonShipForce);
+        //    // If the ship has just been released, a small force is applied towards the right
+        //    if (m_JustReleased) {
+        //        m_JustReleased = false;
+        //        m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2 (5f, 0));
+        //    }
+        //}
         // Debug.Log(r);
         // Debug.Log((m_Earth.transform.position - m_Moon.transform.position).normalized);
         // Debug.Log((G * (mass_earth * mass_moon) / (r * r)));

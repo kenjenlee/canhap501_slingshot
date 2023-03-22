@@ -65,7 +65,7 @@ public class SlingshotRope : MonoBehaviour {
             float currY = this.followTarget.transform.position.y;
 
             float ratio = (currY - yStart) / (yEnd - yStart);
-            Debug.Log(ratio);
+            //Debug.Log(ratio);
             if (ratio > 0)
             {
                 this.indexMousePos = (int)(this.segmentLength * ratio);
