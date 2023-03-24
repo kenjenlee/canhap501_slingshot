@@ -58,7 +58,7 @@ public class Slingshot : MonoBehaviour
     private float m_EndEffectorRadius = 0.006f;
 
     [SerializeField]
-    private float m_WallStiffness = 45000f;
+    private float m_WallStiffness = 45f;
 
     [SerializeField]
     private Vector2 m_WallAdditionalForce = new Vector2(0f, 50000f);
@@ -119,6 +119,8 @@ public class Slingshot : MonoBehaviour
     private float m_EarthDistance = 0.0f;
     private Vector2 m_EarthForce = new Vector2(0f, 0f);
     private Vector2 m_EffectorPosition = new Vector2(0f, 0f);
+
+    private readonly System.Random m_rand = new System.Random();
 
     ////////  Booster visuals stuff  ////////
     private float LastPos_x;
@@ -194,7 +196,9 @@ public class Slingshot : MonoBehaviour
 
     private void Update()
     {
-        Gravity();
+        if(GameManager.GetState() == GameState.Freemovement)
+            Gravity();
+
         if(Input.GetKey(KeyCode.T))
         {
             m_IsTethered = !m_IsTethered;
@@ -416,11 +420,13 @@ public class Slingshot : MonoBehaviour
                         m_EndEffectorForce[0] = -500*m_EarthForce[0];
                         m_EndEffectorForce[1] = -500*m_EarthForce[1];
                     }
+                    //Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
 
                 }
                 else if (GameManager.GetState() == GameState.Slingshot)
                 {
                     m_WallForce = Vector2.zero;
+
                     if (m_WallOrientation == WallOrientation.Horizontal)
                     {
                         m_WallPenetration = new Vector2(
@@ -433,22 +439,29 @@ public class Slingshot : MonoBehaviour
                             // m_WallForce += m_WallAdditionalForce;
                         }
                     }
-                    else
+                    else // vertical wall
                     {
                         m_WallPenetration = new Vector2(
                             m_WallPosition.x - (m_EndEffectorPosition[0] + m_EndEffectorRadius),
-                            0f
+                            10f * (m_SlingshotRope.midYpos - m_EndEffectorPosition[1] - m_EndEffectorRadius)
                         );
                         // Debug.Log(m_WallPenetration.x);
                         if (m_WallPenetration.x < 0f)
                         {
                             m_WallForce += m_WallPenetration * -m_WallStiffness;
                         }
+
                     }
+
 
                     m_EndEffectorForce[0] = -m_WallForce[0];
                     m_EndEffectorForce[1] = -m_WallForce[1];
-                    // Debug.Log( $"m_EndEffectorForce.x: {m_EndEffectorForce[0]}, m_EndEffectorForce.y: {m_EndEffectorForce[1]}" );
+
+                    float timePassed = SlingshotTimer.secondsToRelease - SlingshotTimer.GetSlingshotTimeLeft();
+                    m_EndEffectorForce[0] -= timePassed * (float)m_rand.NextDouble() * 5f;
+                    m_EndEffectorForce[1] -= timePassed * (float)m_rand.NextDouble() * 5f;
+
+                    Debug.Log( $"m_EndEffectorForce.x: {m_EndEffectorForce[0]}, m_EndEffectorForce.y: {m_EndEffectorForce[1]}" );
                 }
                 else if (GameManager.GetState() == GameState.Released)
                 {
@@ -525,6 +538,7 @@ public class Slingshot : MonoBehaviour
         {
             position.x = m_EndEffectorPosition[0]; // Don't need worldPixelWidth/2, because Unity coordinate space is zero'd with display center
             position.y = m_EndEffectorPosition[1]; // Offset is arbitrary to keep end effector avatar inside of workspace
+            Debug.Log("updating end effector graphics " + position.x + " " + position.y);
         }
 
         //position *= m_WorldSize.x / 0.24f;
@@ -544,7 +558,7 @@ public class Slingshot : MonoBehaviour
                 GameManager.UpdateGameState(GameState.Slingshot);
             }
         }
-        else
+        else if (GameManager.GetState() == GameState.Released)
         {
             if (LastPos_x + 0.001 < position.x)
             {
@@ -603,6 +617,15 @@ public class Slingshot : MonoBehaviour
     private float CalculateAbsMagnitude(float[] num)
     {
         return Mathf.Abs(CalculateAbsMagnitude(num));
+    }
+
+    static float NextFloat(System.Random random)
+    //static float NextFloat()
+    {
+        double mantissa = (random.NextDouble() * 2.0) - 1.0;
+        // choose -149 instead of -126 to also generate subnormal floats (*)
+        double exponent = System.Math.Pow(2.0, random.Next(-126, 128));
+        return (float)(mantissa * exponent);
     }
     #endregion
 }

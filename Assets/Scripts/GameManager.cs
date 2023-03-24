@@ -43,6 +43,7 @@ public class GameManager : MonoBehaviour
                 throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
         }
         OnGameStateChanged?.Invoke(newState);
+        Debug.Log("Updating to GameState: " + newState);
     }
 
     public static GameState GetState()

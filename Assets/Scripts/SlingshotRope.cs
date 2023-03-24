@@ -10,6 +10,7 @@ public class SlingshotRope : MonoBehaviour {
     public Transform StartPoint;
     [SerializeField]
     public Transform EndPoint;
+    public float midYpos;
 
     private LineRenderer lineRenderer;
     private List<RopeSegment> ropeSegments = new List<RopeSegment>();
@@ -29,6 +30,7 @@ public class SlingshotRope : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
+        SlingshotTimer.OnSlingshotTimerEnd += SlingshotTimerEnd;
         this.lineRenderer = this.GetComponent<LineRenderer>();
         Vector3 ropeStartPoint = StartPoint.position;
 
@@ -37,7 +39,11 @@ public class SlingshotRope : MonoBehaviour {
             this.ropeSegments.Add(new RopeSegment(ropeStartPoint));
             ropeStartPoint.x -= ropeSegLen;
         }
-        
+
+        if (EndPoint.position.y > StartPoint.position.y)
+            midYpos = StartPoint.position.y + (EndPoint.position.y - StartPoint.position.y) / 2f;
+        else
+            midYpos = EndPoint.position.y + (StartPoint.position.y - EndPoint.position.y) / 2f;
     }
 
 
@@ -65,7 +71,7 @@ public class SlingshotRope : MonoBehaviour {
             float currY = this.followTarget.transform.position.y;
 
             float ratio = (currY - yStart) / (yEnd - yStart);
-            Debug.Log(ratio);
+            //Debug.Log(ratio);
             if (ratio > 0)
             {
                 this.indexMousePos = (int)(this.segmentLength * ratio);
@@ -77,6 +83,11 @@ public class SlingshotRope : MonoBehaviour {
     private void FixedUpdate()
     {
         this.Simulate();
+    }
+
+    private void SlingshotTimerEnd()
+    {
+        gameObject.SetActive(false);
     }
 
     private void Simulate()
