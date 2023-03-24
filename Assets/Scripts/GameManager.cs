@@ -34,10 +34,11 @@ public class GameManager : MonoBehaviour
             case GameState.Freemovement:
                 break;
             case GameState.Slingshot:
-
                 break;
             case GameState.Released:
             // code to switch mode to controller mode
+                break;
+            case GameState.GameWon:
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
@@ -56,5 +57,6 @@ public class GameManager : MonoBehaviour
 public enum GameState {
     Freemovement,
     Slingshot,
-    Released
+    Released,
+    GameWon
 }
