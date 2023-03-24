@@ -320,7 +320,7 @@ MonoBehaviour:
   m_WallAvatar: {fileID: 1594177289}
   m_EndEffectorArrowAvatar: {fileID: 320694494}
   m_EndEffectorRadius: 0.006
-  m_WallStiffness: 45000
+  m_WallStiffness: 45
   m_WallAdditionalForce: {x: 0, y: 50000}
   m_WallOrientation: 1
   m_SlingshotRope: {fileID: 916280749}
@@ -1013,6 +1013,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   StartPoint: {fileID: 1396949597}
   EndPoint: {fileID: 187653010}
+  midYpos: 0
   followTarget: {fileID: 1371053942}
 --- !u!1001 &1230359673
 PrefabInstance:
@@ -1530,6 +1531,10 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0.9009558
       objectReference: {fileID: 0}
+    - target: {fileID: 3371868764636904773, guid: cb7f7c5d85b472c49acddec327a17bb3, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3371868764636904774, guid: cb7f7c5d85b472c49acddec327a17bb3, type: 3}
       propertyPath: m_RootOrder
       value: 3
@@ -1679,7 +1684,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51b2aabca86db4485b8c77c9f2ee3b8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  secondsToRelease: 5
   m_tmp: {fileID: 310421}
 --- !u!114 &1769364548
 MonoBehaviour:
