@@ -41,6 +41,8 @@ public class Slingshot : MonoBehaviour
     [SerializeField]
     private SpriteRenderer m_EndEffectorAvatar;
 
+    private ship_class ship_val;
+
     [SerializeField]
     private SpriteRenderer m_EndEffectorStartAvatar;
 
@@ -120,6 +122,8 @@ public class Slingshot : MonoBehaviour
     public const float mass_moon = 1.0f;
     public const float mass_ship = 20f;
     GameObject[] celestials;
+    planet[] planet_vals;
+    int cur_cel;
     Vector2[] planet_vel;
 
 
@@ -181,6 +185,8 @@ public class Slingshot : MonoBehaviour
     {
         Debug.Log($"Screen.width: {Screen.width}");
         celestials = GameObject.FindGameObjectsWithTag("Celestial");
+        planet_vals = FindObjectsOfType<planet>();
+        ship_val = FindObjectOfType<ship_class>();
         //planet_vel = new Vector2[celestials.Length];
         //int size = celestials.Length;
         //Time.fixedDeltaTime = physicsTimeStep;
@@ -249,6 +255,14 @@ public class Slingshot : MonoBehaviour
             m_FiringThrusters = false;
             m_anchorPointX = 0f;
             m_anchorPointY = 0f;
+        }
+        if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            if (--cur_cel <= 0) cur_cel += celestials.Length;
+        }
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            if (++cur_cel >= celestials.Length) cur_cel -= celestials.Length;
         }
     }
     
@@ -442,19 +456,10 @@ public class Slingshot : MonoBehaviour
                 // Debug.Log( $"m_WallPosition.y: {m_WallPosition.y}, m_EndEffectorPosition[1] + m_EndEffectorRadius: {m_EndEffectorPosition[1] + m_EndEffectorRadius}" );
                 if (GameManager.GetState() == GameState.Freemovement)
                 {
-                    m_EarthDistance = Vector2.Distance(new Vector2(0.0f, 0.0f), m_EffectorPosition);
-                    // m_WallPenetration = new Vector2( 0f, m_WallPosition.y - (m_EndEffectorPosition[1] + m_EndEffectorRadius) );
-                    m_EffectorPosition = new Vector2(m_EndEffectorPosition[0], m_EndEffectorPosition[1]);
-                    Vector2 gravity_force = new Vector2(0.0f, 0.0f);
-
-                    if (!m_IsTethered)    {
-                        gravity_force = ((new Vector2(0.0f, 0.0f) - m_EffectorPosition).normalized * (G * (mass_earth * mass_moon) / (m_EarthDistance*m_EarthDistance)));
-                        m_EndEffectorForce[0] = 400*gravity_force[0];
-                        m_EndEffectorForce[1] = 400*gravity_force[1];
-                    }
-                    else    {
-                        m_EndEffectorForce[0] = -500*m_EarthForce[0];
-                        m_EndEffectorForce[1] = -500*m_EarthForce[1];
+                    if (m_IsTethered){
+                        // Using left and right arrows one can audition the planets 
+                        m_EndEffectorForce[0] = 400*planet_vals[cur_cel].grav.x;
+                        m_EndEffectorForce[1] = 400 * planet_vals[cur_cel].grav.y;
                     }
                     //Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
 
@@ -501,29 +506,40 @@ public class Slingshot : MonoBehaviour
                 }
                 else if (GameManager.GetState() == GameState.Released)
                 {
-                    if (m_JustReleased)
-                    {
-                        //m_JustReleased = false;
-                        // m_ReleasedForce[0] = m_EndEffectorForce[0];
-                        // m_ReleasedForce[1] = m_EndEffectorForce[1];
-                        // m_EndEffectorForce[0] = m_ReleasedForce[0];
-                        // m_EndEffectorForce[1] = m_ReleasedForce[1];
-                        m_EndEffectorForce[0] = 0f;
-                        m_EndEffectorForce[1] = 0f;
-                    }
+                    m_EndEffectorForce[0] = 0f;
+                    m_EndEffectorForce[1] = 0f;
+                    //Not needed and is it really how a slingshot works?
+                    //should the ship not feel the force slowly dissipase at it is being released by the sling shot?
+
+                    //if (m_JustReleased)
+                    //{
+                    //    //m_JustReleased = false;
+                    //    // m_ReleasedForce[0] = m_EndEffectorForce[0];
+                    //    // m_ReleasedForce[1] = m_EndEffectorForce[1];
+                    //    // m_EndEffectorForce[0] = m_ReleasedForce[0];
+                    //    // m_EndEffectorForce[1] = m_ReleasedForce[1];
+                    //    m_EndEffectorForce[0] = 0f;
+                    //    m_EndEffectorForce[1] = 0f;
+                    //}
 
                     if (m_FiringThrusters)  {
-                        // When thrusters are fired, only render the force caused by them
-                        m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
-                        m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
+                        // When thrusters are fired, only render the force caused by 
+                        // WHY?
+                        // If there is problems rending both gravitational and thruster forces, then we need to balance them better,
+                        // give enough headroom for the thrusters to be added ontop of the gravitational forces
+
+                        m_EndEffectorForce[0] += 20 * m_EndEffectorHorizontalThrustForce;
+                        m_EndEffectorForce[1] += 20 * m_EndEffectorVerticalThrustForce;
 
                         m_EndEffectorHorizontalThrustForce = 5f;
                         m_EndEffectorVerticalThrustForce = 5;
                     }
-                    else    {
-                        m_EndEffectorForce[0] = 0f;
-                        m_EndEffectorForce[1] = 0f;
-                    }
+                    m_EndEffectorForce[0] += ship_val.gravitational_forces.x;
+                    m_EndEffectorForce[1] += ship_val.gravitational_forces.y; 
+                    //else    {
+                    //    m_EndEffectorForce[0] = 0f;
+                    //    m_EndEffectorForce[1] = 0f;
+                    //}
 
                     //Debug.Log("End effector (x, y): (" + m_EndEffectorPosition[0] + ", " + m_EndEffectorPosition[1] + ")"  
                 }
