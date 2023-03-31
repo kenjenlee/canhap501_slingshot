@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Celestial
   - EndEffectorAvatar
+  - Pantogram
   layers:
   - Default
   - TransparentFX

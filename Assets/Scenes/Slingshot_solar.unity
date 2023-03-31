@@ -272,6 +272,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6981364}
   - component: {fileID: 6981365}
+  - component: {fileID: 6981363}
   m_Layer: 0
   m_Name: Hello Wall
   m_TagString: Untagged
@@ -279,6 +280,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &6981363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6981362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7164967dae9a497492cf0433e7bb04a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gravitational_forces: {x: 0, y: 0}
+  mass: 0
 --- !u!4 &6981364
 Transform:
   m_ObjectHideFlags: 0
@@ -530,6 +545,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   vel: {x: 0, y: 0}
+  grav: {x: 0, y: 0}
 --- !u!4 &187653010 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4681313415191870, guid: 675cc7653b6314936b4f25c51bc3481a, type: 3}
@@ -831,6 +847,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   vel: {x: 0, y: 0}
+  grav: {x: 0, y: 0}
 --- !u!50 &502401289
 Rigidbody2D:
   serializedVersion: 4
@@ -1037,6 +1054,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   vel: {x: 0, y: 0}
+  grav: {x: 0, y: 0}
 --- !u!50 &683988365
 Rigidbody2D:
   serializedVersion: 4
@@ -1269,6 +1287,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   StartPoint: {fileID: 1396949597}
   EndPoint: {fileID: 187653010}
+  midYpos: 0
   followTarget: {fileID: 1371053942}
 --- !u!1001 &1230359673
 PrefabInstance:
@@ -1462,6 +1481,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   vel: {x: 0, y: 0}
+  grav: {x: 0, y: 0}
 --- !u!1001 &1339637031
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1524,6 +1544,10 @@ PrefabInstance:
     - target: {fileID: 793148749041878968, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_Name
       value: Pantograph
+      objectReference: {fileID: 0}
+    - target: {fileID: 793148749041878968, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
+      propertyPath: m_TagString
+      value: Pantogram
       objectReference: {fileID: 0}
     - target: {fileID: 793148749041878971, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_DeviceID
@@ -1790,6 +1814,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   vel: {x: 0, y: 0}
+  grav: {x: 0, y: 0}
 --- !u!4 &1396949597 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4035757308914462, guid: 675cc7653b6314936b4f25c51bc3481a, type: 3}
@@ -2050,7 +2075,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51b2aabca86db4485b8c77c9f2ee3b8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  secondsToRelease: 5
   m_tmp: {fileID: 310421}
 --- !u!114 &1769364548
 MonoBehaviour:
