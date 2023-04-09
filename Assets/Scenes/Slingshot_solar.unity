@@ -272,7 +272,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6981364}
   - component: {fileID: 6981365}
-  - component: {fileID: 6981363}
   m_Layer: 0
   m_Name: Hello Wall
   m_TagString: Untagged
@@ -280,20 +279,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &6981363
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6981362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7164967dae9a497492cf0433e7bb04a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gravitational_forces: {x: 0, y: 0}
-  mass: 0
 --- !u!4 &6981364
 Transform:
   m_ObjectHideFlags: 0
@@ -423,7 +408,8 @@ GameObject:
   - component: {fileID: 55298844}
   - component: {fileID: 55298846}
   - component: {fileID: 55298847}
-  m_Layer: 0
+  - component: {fileID: 55298848}
+  m_Layer: 7
   m_Name: Earth
   m_TagString: Celestial
   m_Icon: {fileID: 0}
@@ -546,6 +532,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   vel: {x: 0, y: 0}
   grav: {x: 0, y: 0}
+--- !u!58 &55298848
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 55298842}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.5
 --- !u!4 &187653010 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4681313415191870, guid: 675cc7653b6314936b4f25c51bc3481a, type: 3}
@@ -813,7 +815,8 @@ GameObject:
   - component: {fileID: 502401290}
   - component: {fileID: 502401289}
   - component: {fileID: 502401288}
-  m_Layer: 0
+  - component: {fileID: 502401291}
+  m_Layer: 7
   m_Name: Jupiter
   m_TagString: Celestial
   m_Icon: {fileID: 0}
@@ -920,6 +923,22 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!58 &502401291
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 502401286}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.46
 --- !u!1 &547664483
 GameObject:
   m_ObjectHideFlags: 0
@@ -1020,7 +1039,8 @@ GameObject:
   - component: {fileID: 683988366}
   - component: {fileID: 683988365}
   - component: {fileID: 683988364}
-  m_Layer: 0
+  - component: {fileID: 683988367}
+  m_Layer: 7
   m_Name: pl4
   m_TagString: Celestial
   m_Icon: {fileID: 0}
@@ -1127,6 +1147,22 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!58 &683988367
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 683988362}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.5
 --- !u!1 &754294070
 GameObject:
   m_ObjectHideFlags: 0
@@ -1375,7 +1411,8 @@ GameObject:
   - component: {fileID: 1323889981}
   - component: {fileID: 1323889980}
   - component: {fileID: 1323889982}
-  m_Layer: 0
+  - component: {fileID: 1323889983}
+  m_Layer: 7
   m_Name: Sun
   m_TagString: Celestial
   m_Icon: {fileID: 0}
@@ -1415,7 +1452,7 @@ Rigidbody2D:
   m_Material: {fileID: 0}
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 0
 --- !u!212 &1323889981
 SpriteRenderer:
@@ -1482,6 +1519,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   vel: {x: 0, y: 0}
   grav: {x: 0, y: 0}
+--- !u!58 &1323889983
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1323889978}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.5
 --- !u!1001 &1339637031
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1491,7 +1544,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 793148749041878596, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_MacComPort
-      value: /dev/cu.usbmodem21301
+      value: /dev/cu.usbmodem2101
       objectReference: {fileID: 0}
     - target: {fileID: 793148749041878596, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_WindowsComPort
@@ -1696,6 +1749,21 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 1.5
+--- !u!114 &1371053945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1371053942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7164967dae9a497492cf0433e7bb04a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gravitational_forces: {x: 0, y: 0}
+  mass: 0
+  fuel: 10
 --- !u!1 &1394402427
 GameObject:
   m_ObjectHideFlags: 0
@@ -1708,7 +1776,8 @@ GameObject:
   - component: {fileID: 1394402430}
   - component: {fileID: 1394402429}
   - component: {fileID: 1394402431}
-  m_Layer: 0
+  - component: {fileID: 1394402432}
+  m_Layer: 7
   m_Name: Moon
   m_TagString: Celestial
   m_Icon: {fileID: 0}
@@ -1815,6 +1884,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   vel: {x: 0, y: 0}
   grav: {x: 0, y: 0}
+--- !u!58 &1394402432
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394402427}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.5
 --- !u!4 &1396949597 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4035757308914462, guid: 675cc7653b6314936b4f25c51bc3481a, type: 3}
@@ -1982,6 +2067,54 @@ SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 3371868764636904773, guid: cb7f7c5d85b472c49acddec327a17bb3, type: 3}
   m_PrefabInstance: {fileID: 1594177287}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1650741483
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1650741485}
+  - component: {fileID: 1650741484}
+  m_Layer: 0
+  m_Name: AsteroidSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1650741484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1650741483}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9aa31ed67f6d24f938d83a8b510301cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  asteroidPrefab: {fileID: 4394751245055917805, guid: fbbd34869d63047c9b8072a86c340c41, type: 3}
+  spawnDistance: 1
+  spawnRate: 1
+  amountPerSpawn: 1
+  trajectoryVariance: 15
+--- !u!4 &1650741485
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1650741483}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 8
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1742574004
 PrefabInstance:
   m_ObjectHideFlags: 0
