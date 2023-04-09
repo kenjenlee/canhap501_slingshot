@@ -4,7 +4,7 @@ namespace Haply.hAPI.Samples
 {
     public class Pantograph : Mechanism
     {
-        private const float GAIN = 1.0f;
+        private const float GAIN = 1f;
 
         [SerializeField]
         private float m_Length1 = 0.07f, m_Length2 = 0.09f, m_Distance = 0.0f;

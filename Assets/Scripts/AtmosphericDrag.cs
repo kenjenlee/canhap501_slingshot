@@ -9,7 +9,7 @@ public class AtmosphericDrag : MonoBehaviour
     {
         if (collision.gameObject.tag == "EndEffectorAvatar")
         {
-            collision.gameObject.GetComponent<Rigidbody2D>().drag = 3f;
+            collision.gameObject.GetComponent<Rigidbody2D>().drag = 0.1f;
             Debug.Log("Entered the gravitational pull region");
         }
     }
