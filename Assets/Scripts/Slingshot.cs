@@ -223,18 +223,18 @@ public class Slingshot : MonoBehaviour
 
         StartCoroutine(StepCountTimer());
     }
-    
-    private void FixedUpdate()
+
+    private void Update()
     {
-        if (Input.GetKey(KeyCode.H))
+        if (Input.GetKeyDown(KeyCode.H))
         {
             m_HapticsOn = !m_HapticsOn;
         }
-        else if (Input.GetKey(KeyCode.T))
+        else if (Input.GetKeyDown(KeyCode.T))
         {
             m_IsTethered = !m_IsTethered;
         }
-        else if (Input.GetKey(KeyCode.C))
+        else if (Input.GetKeyDown(KeyCode.C))
         {
             m_IsCameraDynamic = !m_IsCameraDynamic;
             if (!m_IsCameraDynamic)
@@ -249,23 +249,23 @@ public class Slingshot : MonoBehaviour
                 Camera.main.orthographicSize = m_CameraDynamicSize;
             }
         }
-        if (Input.GetKey(KeyCode.F))
+        if (Input.GetKeyDown(KeyCode.F))
         {
             m_FiringThrusters = true;
             m_anchorPointX = m_EndEffectorPosition[0];
             m_anchorPointY = m_EndEffectorPosition[1];
         }
-        else if (Input.GetKey(KeyCode.S))
+        else if (Input.GetKeyDown(KeyCode.S))
         {
             m_FiringThrusters = false;
             m_anchorPointX = 0f;
             m_anchorPointY = 0f;
         }
-        if (Input.GetKey(KeyCode.LeftArrow))
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             if (--cur_cel <= 0) cur_cel += celestials.Length;
         }
-        if (Input.GetKey(KeyCode.RightArrow))
+        if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             if (++cur_cel >= celestials.Length) cur_cel -= celestials.Length;
         }
