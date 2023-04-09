@@ -181,8 +181,8 @@ public class Slingshot : MonoBehaviour
         m_InitialArrowScale = m_EndEffectorArrowAvatar.transform.localScale;
         GameManager.OnGameStateChanged += OnGameStateChanged;
         int LayerIgnoreAsteroid = LayerMask.NameToLayer("Ignore Asteroid");
-        //m_EndEffectorAvatar.gameObject.layer = LayerIgnoreAsteroid;
-        //m_EndEffectorStartAvatar.gameObject.layer = LayerIgnoreAsteroid;
+        m_EndEffectorAvatar.gameObject.layer = LayerIgnoreAsteroid;
+        m_EndEffectorStartAvatar.gameObject.layer = LayerIgnoreAsteroid;
     }
 
     private void Start()
@@ -194,7 +194,6 @@ public class Slingshot : MonoBehaviour
         alpha = 0.5f;
         fuel = 1;
         Application.targetFrameRate = 60;
-
         
 
         m_HaplyBoard.Initialize();

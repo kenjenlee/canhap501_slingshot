@@ -148,6 +148,12 @@ MonoBehaviour:
   spriteRenderer: {fileID: 2538125824281061377}
   sprites:
   - {fileID: 21300018, guid: 1bd6c74c058d5f143a391104c445e845, type: 3}
+  - {fileID: 21300006, guid: 1bd6c74c058d5f143a391104c445e845, type: 3}
+  - {fileID: 21300022, guid: 1bd6c74c058d5f143a391104c445e845, type: 3}
+  - {fileID: 21300024, guid: 1bd6c74c058d5f143a391104c445e845, type: 3}
+  - {fileID: 21300028, guid: 1bd6c74c058d5f143a391104c445e845, type: 3}
+  - {fileID: 21300004, guid: 1bd6c74c058d5f143a391104c445e845, type: 3}
+  - {fileID: 21300020, guid: 1bd6c74c058d5f143a391104c445e845, type: 3}
   ratio: 200
   size: 0.01
   minSize: 0.005
