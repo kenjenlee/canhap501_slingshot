@@ -112,6 +112,7 @@ public class Slingshot : MonoBehaviour
     private bool m_JustReleased = true;
     private bool m_DecoupleEndEffectorFromAvatar = false;
     private bool m_FiringThrusters = false;
+    private bool m_HapticsOn = true;
     private float m_anchorPointX = 0f;
     private float m_anchorPointY = 0f;
     private float m_thrusterStiffness = 1f;
@@ -225,7 +226,11 @@ public class Slingshot : MonoBehaviour
     
     private void FixedUpdate()
     {
-        if (Input.GetKey(KeyCode.T))
+        if (Input.GetKey(KeyCode.H))
+        {
+            m_HapticsOn = !m_HapticsOn;
+        }
+        else if (Input.GetKey(KeyCode.T))
         {
             m_IsTethered = !m_IsTethered;
         }
@@ -552,8 +557,11 @@ public class Slingshot : MonoBehaviour
                 m_EndEffectorPosition = DeviceToGraphics(m_EndEffectorPosition);
             }
 
-            m_WidgetOne.SetDeviceTorques(m_EndEffectorForce, m_Torques);
-            m_WidgetOne.DeviceWriteTorques();
+            if (m_HapticsOn)
+            {
+                m_WidgetOne.SetDeviceTorques(m_EndEffectorForce, m_Torques);
+                m_WidgetOne.DeviceWriteTorques();
+            }
 
             m_RenderingForce = false;
             m_Steps++;
