@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Haply.hAPI;
 using Haply.hAPI.Samples;
+using UnityEngine.UI;
 
 using TimeSpan = System.TimeSpan;
 using Stopwatch = System.Diagnostics.Stopwatch;
+using TMPro;
 
 public class Slingshot : MonoBehaviour
 {
@@ -147,6 +149,17 @@ public class Slingshot : MonoBehaviour
     [SerializeField]
     private GameObject EngineFire_Down;
 
+    [SerializeField]
+    private float fuel = 100f;
+
+    [SerializeField]
+    private Slider fuelSlider;
+
+    [SerializeField]
+    private float fuelBurnRate = 1.5f;
+
+    private float currentFuel;
+
     ////////  Camera stuff ////////
     private bool m_IsCameraDynamic = true;
 
@@ -156,12 +169,18 @@ public class Slingshot : MonoBehaviour
     [SerializeField]
     private float m_CameraDynamicSize = 0.15f;
 
+    ////////  HUD  ////////
+    [SerializeField] private TextMeshProUGUI thrustersStatus;
+    [SerializeField] private TextMeshProUGUI hapticFeedbackStatus;
+
     #region Setup
     private void Awake()
     {
         m_ConcurrentDataLock = new object();
         m_InitialArrowScale = m_EndEffectorArrowAvatar.transform.localScale;
         GameManager.OnGameStateChanged += OnGameStateChanged;
+
+        currentFuel = fuel;
     }
 
     private void Start()
@@ -204,8 +223,18 @@ public class Slingshot : MonoBehaviour
         
     }
 
+    private void FixedUpdate()
+    {
+        if (m_FiringThrusters)
+        {
+            currentFuel -= fuelBurnRate * Time.deltaTime;
+        }
+    }
+
     private void Update()
     {
+        fuelSlider.value = currentFuel / fuel;
+
         Gravity();
         if(Input.GetKey(KeyCode.T))
         {
@@ -225,12 +254,14 @@ public class Slingshot : MonoBehaviour
                 Camera.main.orthographicSize = m_CameraDynamicSize;
             }
         }
-        if (Input.GetKey(KeyCode.F))    {
+        if (Input.GetKey(KeyCode.F) && (GameManager.GetState() == GameState.Released))    {
             m_FiringThrusters = true;
+            thrustersStatus.text = "Thrusters (Enabled)";
             m_anchorPointX = m_EndEffectorPosition[0];
             m_anchorPointY = m_EndEffectorPosition[1];
-        } else if (Input.GetKey(KeyCode.S)) {
+        } else if (Input.GetKey(KeyCode.S   )) {
             m_FiringThrusters = false;
+            thrustersStatus.text = "Thrusters (Disabled)";
             m_anchorPointX = 0f;
             m_anchorPointY = 0f;
         }
@@ -346,8 +377,7 @@ public class Slingshot : MonoBehaviour
             m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
             m_EndEffectorStartAvatar.enabled = false;
             m_EndEffectorAvatar.enabled = true;
-            
-           
+            fuelSlider.gameObject.SetActive(true);
         }
         else if (s == GameState.Released)
         {
@@ -437,6 +467,7 @@ public class Slingshot : MonoBehaviour
                         m_EndEffectorForce[1] = 400*gravity_force[1];
                     }
                     else    {
+                        Debug.Log("yyyyyyyyyyy");
                         m_EndEffectorForce[0] = -500*m_EarthForce[0];
                         m_EndEffectorForce[1] = -500*m_EarthForce[1];
                     }
@@ -488,12 +519,14 @@ public class Slingshot : MonoBehaviour
                     }
 
                     if (m_FiringThrusters)  {
+
                         // When thrusters are fired, only render the force caused by them
                         m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
                         m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
 
                         m_EndEffectorHorizontalThrustForce = 5f;
                         m_EndEffectorVerticalThrustForce = 5;
+
                     }
                     else    {
                         m_EndEffectorForce[0] = 0f;

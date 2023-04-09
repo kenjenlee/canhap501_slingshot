@@ -10,6 +10,8 @@ public class SlingshotTimer : MonoBehaviour
 
     private float m_timeRemaining;
 
+    private int t;
+
     // private TMPro.TextMeshProUGUI m_tmp;
     [SerializeField] private TextMeshProUGUI m_tmp;
 
@@ -30,10 +32,12 @@ public class SlingshotTimer : MonoBehaviour
             {
                 m_timeRemaining -= Time.deltaTime;
                 // REF: https://forum.unity.com/threads/convert-float-to-a-string.28332/
-                m_tmp.text = m_timeRemaining.ToString();
+
+                t = (int)m_timeRemaining;
+                m_tmp.text = t.ToString();
             } else {
                 GameManager.UpdateGameState(GameState.Released);
-                m_tmp.text = "Released!";
+                m_tmp.text = "";
             }
         }
         
