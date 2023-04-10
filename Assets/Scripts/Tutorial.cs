@@ -20,6 +20,21 @@ public class Tutorial : MonoBehaviour
         Vertical
     }
 
+    private enum TutorialStage
+    {
+        Start,
+        TurnOnHapticFeedback,
+        TurnOnTetheredMode,
+        TurnOffTetheredMode
+        //Slingshot,
+        //Released,
+        //GameWon,
+        //GameLostBoundsExceeded,
+        //GameLostFuelDrained
+    }
+
+    private TutorialStage m_TutorialStage;
+
     public const int CW = 0;
     public const int CCW = 1;
 
@@ -118,7 +133,7 @@ public class Tutorial : MonoBehaviour
     ////////  Planet stuff  ////////
     public const float G = 6.67e-11f;
     public const float mass_earth = 333000.0f;
-    public const float mass_moon = 1.0f;
+    public const float mass_moon = 1f;
     public const float mass_ship = 50f;
     GameObject[] celestials;
 
@@ -126,17 +141,19 @@ public class Tutorial : MonoBehaviour
     private GameObject m_Earth;
 
     private Vector2 earthPos;
+    private Vector2 moonPos;
     private Vector2 effectorPos;
 
-    // For the tutorial, we only place one object
-    //[SerializeField]
-    //private GameObject m_Moon;
+    [SerializeField]
+    private GameObject m_Moon;
 
     [SerializeField]
     private GameObject m_Destination;
 
     [SerializeField]
     private bool m_IsTethered = false;
+    [SerializeField]
+    private bool m_HapticFeedbackEnabled = false;
     private float m_EarthDistance = 0.0f;
     private Vector2 m_EarthForce = new Vector2(0f, 0f);
     private Vector2 m_EffectorPosition = new Vector2(0f, 0f);
@@ -180,6 +197,7 @@ public class Tutorial : MonoBehaviour
     ////////  HUD  ////////
     [SerializeField] private TextMeshProUGUI thrustersStatus;
     [SerializeField] private TextMeshProUGUI hapticFeedbackStatus;
+    [SerializeField] private TextMeshProUGUI tetheredModeStatus;
     [SerializeField] private TextMeshProUGUI tutorialPrompt;
 
     ////////  Scene reloading ////////
@@ -188,7 +206,6 @@ public class Tutorial : MonoBehaviour
     #region Setup
     private void Awake()
     {
-        Debug.Log("In awake");
         m_ConcurrentDataLock = new object();
         m_InitialArrowScale = m_EndEffectorArrowAvatar.transform.localScale;
         GameManager.OnGameStateChanged += OnGameStateChanged;
@@ -198,7 +215,6 @@ public class Tutorial : MonoBehaviour
 
     private void Start()
     {
-        Debug.Log("In start");
         Debug.Log($"Screen.width: {Screen.width}");
 
         Application.targetFrameRate = 60;
@@ -232,14 +248,19 @@ public class Tutorial : MonoBehaviour
         StartCoroutine(StepCountTimer());
 
         ////////  planet stuff  ////////
-        //SetInitialVelocity();
+        SetInitialVelocity();
         earthPos = m_Earth.transform.position;
+        moonPos = m_Moon.transform.position;
 
         // Initial texts
-        hapticFeedbackStatus.text = m_IsTethered ? "Haptic Feedback (Enabled)" : "Haptic Feedback (Disabled)";
+        hapticFeedbackStatus.text = m_HapticFeedbackEnabled ? "Haptic Feedback (Enabled)" : "Haptic Feedback (Disabled)";
+        tetheredModeStatus.text = m_IsTethered ? "Tethered Mode (Enabled)" : "Tethered Mode (Disabled)";
 
         tutorialPrompt.text = "Let's get started with Slingshot! Right now, you're in 'Unrestricted Free Movement' " +
-            "- that means you can move the end-effector around through space without any forces. To turn on gravity, press T.";
+            "- that means you can move the end-effector around through space without any forces. " +
+            "To turn on gravity and haptic feedback, press H.";
+
+        m_TutorialStage = TutorialStage.Start;
 
     }
 
@@ -280,14 +301,38 @@ public class Tutorial : MonoBehaviour
         earthPos = new Vector2(m_Earth.transform.position[0], m_Earth.transform.position[1]);
         Gravity();
 
-        if (Input.GetKeyDown(KeyCode.T))
+        if (Input.GetKeyDown(KeyCode.H))
         {
-            tutorialPrompt.text = "Awesome! Now you can feel the pull from planets in the level. In Free Movement mode, " +
+            if(m_TutorialStage == TutorialStage.Start)
+            {
+                tutorialPrompt.text = "Awesome! Now you can feel the pull from planets in the level. In Free Movement mode, " +
                                     "try to move around and develop a sense for the level before launching your spaceship. " +
-                                    "When you're ready, move to the left and hover over the ship to start launching. The " +
+                                    "Next, try pressing T to turn on tethered mode.";
+                                    
+                m_TutorialStage = TutorialStage.TurnOnHapticFeedback;
+            }
+            
+            m_HapticFeedbackEnabled = !m_HapticFeedbackEnabled;
+            hapticFeedbackStatus.text = m_HapticFeedbackEnabled ? "Haptic Feedback (Enabled)" : "Haptic Feedback (Disabled)";
+        }
+        else if (Input.GetKeyDown(KeyCode.T))
+        {
+            if(m_TutorialStage == TutorialStage.TurnOnHapticFeedback)
+            {
+                tutorialPrompt.text = "Now, you will feel the gravitational forces felt by the Moon that is revolving around Earth." +
+                    "Next, press T again to turn off tethered mode.";
+                m_TutorialStage = TutorialStage.TurnOnTetheredMode;
+            }
+            else if(m_TutorialStage == TutorialStage.TurnOnTetheredMode)
+            {
+                tutorialPrompt.text = "Tethered mode is now turned off. " +
+                    "When you're ready, move to the left and hover over the ship to start launching. The " +
                                     "launch timer gives you 5 seconds to adjust the ship's position before releasing!";
+                m_TutorialStage = TutorialStage.TurnOffTetheredMode;
+            }
             m_IsTethered = !m_IsTethered;
-            hapticFeedbackStatus.text = m_IsTethered ? "Haptic Feedback (Enabled)" : "Haptic Feedback (Disabled)";
+            tetheredModeStatus.text = m_IsTethered ? "Tethered Mode (Enabled)" : "Tethered Mode (Disabled)";
+
         }
         else if (Input.GetKeyDown(KeyCode.C))
         {
@@ -557,9 +602,13 @@ public class Tutorial : MonoBehaviour
                     }
                     else
                     {
-                        Debug.Log("Earthforce: " + m_EarthForce[0] + " " + m_EarthForce[1]);
-                        m_EndEffectorForce[0] = -500 * m_EarthForce[0];
-                        m_EndEffectorForce[1] = -500 * m_EarthForce[1];
+                        float rMoon = Vector2.Distance(earthPos, moonPos);
+                        gravity_force = (earthPos - moonPos).normalized * (G * (mass_earth * mass_moon) / (rMoon * rMoon));
+                        m_EndEffectorForce[0] = -400 * gravity_force[0];
+                        m_EndEffectorForce[1] = -400 * gravity_force[1];
+                        //Debug.Log("Earthforce: " + m_EarthForce[0] + " " + m_EarthForce[1]);
+                        //m_EndEffectorForce[0] = -500 * m_EarthForce[0];
+                        //m_EndEffectorForce[1] = -500 * m_EarthForce[1];
                     }
 
                 }
@@ -644,8 +693,11 @@ public class Tutorial : MonoBehaviour
                 m_EndEffectorPosition = DeviceToGraphics(m_EndEffectorPosition);
             }
 
-            m_WidgetOne.SetDeviceTorques(m_EndEffectorForce, m_Torques);
-            m_WidgetOne.DeviceWriteTorques();
+            if(m_HapticFeedbackEnabled)
+            {
+                m_WidgetOne.SetDeviceTorques(m_EndEffectorForce, m_Torques);
+                m_WidgetOne.DeviceWriteTorques();
+            }
 
             m_RenderingForce = false;
             m_Steps++;
@@ -665,7 +717,6 @@ public class Tutorial : MonoBehaviour
     #endregion
 
     #region Planet
-    /*
     private void SetInitialVelocity()
     {
         Debug.Log("Setting Initial Velocity...\n");
@@ -673,15 +724,17 @@ public class Tutorial : MonoBehaviour
         m_Moon.GetComponent<Rigidbody2D>().velocity +=
             (Vector2)m_Moon.transform.right * Mathf.Sqrt((G * mass_earth) / r);
     }
-    */
+    
 
     private void Gravity()
     {
         //Debug.Log("Computing Gravity...\n");
-        //float r = Vector2.Distance(m_Earth.transform.position, m_Moon.transform.position);
-        //m_EarthForce =
-        //    (m_Earth.transform.position - m_Moon.transform.position).normalized
-        //    * (G * (mass_earth * mass_moon) / (r * r));
+        float rMoon = Vector2.Distance(m_Earth.transform.position, m_Moon.transform.position);
+        m_EarthForce =
+            (m_Earth.transform.position - m_Moon.transform.position).normalized
+            * (G * (mass_earth * mass_moon) / (rMoon * rMoon));
+        m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
+
         m_EarthForce = new Vector2(0f, 0f);
         //m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
         if (GameManager.GetState() == GameState.Released)
@@ -693,9 +746,9 @@ public class Tutorial : MonoBehaviour
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_EarthShipForce);
 
             // The moon also has gravitational influence on the ship (NOT IN THE TUTORIAL)
-            //r = Vector2.Distance(m_Moon.transform.position, m_CurrentEndEffectorAvatar.transform.position);
-            //Vector2 m_MoonShipForce = ( m_Moon.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_moon * mass_ship) / (r * r));
-            //m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_MoonShipForce);
+            r = Vector2.Distance(m_Moon.transform.position, m_CurrentEndEffectorAvatar.transform.position);
+            Vector2 m_MoonShipForce = (m_Moon.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_moon * mass_ship) / (r * r));
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_MoonShipForce);
 
             // If the ship has just been released, a small force is applied towards the right
             if (m_JustReleased)
@@ -854,5 +907,7 @@ public class Tutorial : MonoBehaviour
         }
     }
 
+
     #endregion
 }
+
