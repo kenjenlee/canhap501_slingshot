@@ -58,5 +58,6 @@ public enum GameState {
     Freemovement,
     Slingshot,
     Released,
-    GameWon
+    GameWon,
+    GameLost
 }

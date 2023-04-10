@@ -6,6 +6,7 @@ using UnityEngine;
 using Haply.hAPI;
 using Haply.hAPI.Samples;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 using TimeSpan = System.TimeSpan;
 using Stopwatch = System.Diagnostics.Stopwatch;
@@ -42,6 +43,9 @@ public class Tutorial : MonoBehaviour
     private SpriteRenderer m_EndEffectorStartAvatar;
 
     private SpriteRenderer m_CurrentEndEffectorAvatar;
+
+    [SerializeField]
+    private Vector2 m_MapAbsBound = new Vector2(1f, .61f);
 
     [SerializeField]
     private SpriteRenderer m_WallAvatar;
@@ -132,7 +136,7 @@ public class Tutorial : MonoBehaviour
     private GameObject m_Destination;
 
     [SerializeField]
-    private bool m_IsTethered;
+    private bool m_IsTethered = false;
     private float m_EarthDistance = 0.0f;
     private Vector2 m_EarthForce = new Vector2(0f, 0f);
     private Vector2 m_EffectorPosition = new Vector2(0f, 0f);
@@ -226,7 +230,10 @@ public class Tutorial : MonoBehaviour
         //SetInitialVelocity();
         earthPos = m_Earth.transform.position;
 
-        
+        // Initial texts
+        hapticFeedbackStatus.text = m_IsTethered ? "Haptic Feedback (Enabled)" : "Haptic Feedback (Disabled)";
+
+
     }
 
     private void FixedUpdate()
@@ -243,17 +250,29 @@ public class Tutorial : MonoBehaviour
         fuelSlider.value = currentFuel / fuel;
         earthPos = new Vector2(m_Earth.transform.position[0], m_Earth.transform.position[1]);
         Gravity();
-        if(Input.GetKey(KeyCode.T))
+
+        if(GameManager.GetState() == GameState.GameWon)
+        {
+            if(Input.GetMouseButtonDown(0))
+            {
+                SceneManager.LoadScene("Slingshot_solar");
+            }
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.T))
         {
             tutorialPrompt.text = "Awesome! Now you can feel the pull from planets in the level. In Free Movement mode, " +
-                                    "try to move around and develop a sense of the level before launching your spaceship. " +
+                                    "try to move around and develop a sense for the level before launching your spaceship. " +
                                     "When you're ready, move to the left and hover over the ship to start launching. The " +
-                                    "launch timer gies you 5 seconds to adjust the ship's position before releasing!";
+                                    "launch timer gives you 5 seconds to adjust the ship's position before releasing!";
             m_IsTethered = !m_IsTethered;
-        } else if(Input.GetKey(KeyCode.C))
+            hapticFeedbackStatus.text = m_IsTethered ? "Haptic Feedback (Enabled)" : "Haptic Feedback (Disabled)";
+        }
+        else if (Input.GetKeyDown(KeyCode.C))
         {
             m_IsCameraDynamic = !m_IsCameraDynamic;
-            if(!m_IsCameraDynamic)
+            if (!m_IsCameraDynamic)
             {
                 Camera.main.transform.position = new Vector3(0f
                     , -m_WorldSize.y / 2f
@@ -265,24 +284,28 @@ public class Tutorial : MonoBehaviour
                 Camera.main.orthographicSize = m_CameraDynamicSize;
             }
         }
-        if (Input.GetKey(KeyCode.F) && (GameManager.GetState() == GameState.Released))    {
-            tutorialPrompt.text = "The orange bar shows the amount of fuel you have remaining. Failing to get to the destination " + 
+        if (Input.GetKeyDown(KeyCode.F) && (GameManager.GetState() == GameState.Released))
+        {
+            tutorialPrompt.text = "The orange bar shows the amount of fuel you have remaining. Failing to get to the destination " +
                                     "before the bar runs out will result in GAME OVER. Good luck!";
-            if (Time.timeScale == 0)    {
+            if (Time.timeScale == 0)
+            {
                 Time.timeScale = 1f;
             }
             m_FiringThrusters = true;
             thrustersStatus.text = "Thrusters (Enabled)";
             m_anchorPointX = m_EndEffectorPosition[0];
             m_anchorPointY = m_EndEffectorPosition[1];
-        } else if (Input.GetKey(KeyCode.S   )) {
+        }
+        else if (Input.GetKeyDown(KeyCode.S))
+        {
             m_FiringThrusters = false;
             thrustersStatus.text = "Thrusters (Disabled)";
             m_anchorPointX = 0f;
             m_anchorPointY = 0f;
         }
     }
-    
+
     private IEnumerator StepCountTimer()
     {
         while (true)
@@ -305,7 +328,7 @@ public class Tutorial : MonoBehaviour
 
     private void OnGameStateChanged(GameState s)
     {
-        if(s == GameState.Freemovement)
+        if (s == GameState.Freemovement)
         {
             m_CurrentEndEffectorAvatar = m_EndEffectorStartAvatar;
             m_EndEffectorStartAvatar.enabled = true;
@@ -326,10 +349,10 @@ public class Tutorial : MonoBehaviour
 
             Camera.main.orthographicSize = m_IsCameraDynamic ?
                 m_CameraDynamicSize : m_CameraStaticSize;
-            Debug.Log(m_IsCameraDynamic);
-            Debug.Log(m_CameraDynamicSize);
-            Debug.Log(m_CameraStaticSize);
-            Debug.Log(Camera.main.orthographicSize);
+            //Debug.Log(m_IsCameraDynamic);
+            //Debug.Log(m_CameraDynamicSize);
+            //Debug.Log(m_CameraStaticSize);
+            //Debug.Log(Camera.main.orthographicSize);
 
             m_Background.transform.position = new Vector3(
                 0f,
@@ -388,7 +411,7 @@ public class Tutorial : MonoBehaviour
             }
 
         }
-        else if(s == GameState.Slingshot)
+        else if (s == GameState.Slingshot)
         {
             tutorialPrompt.text = "Great! Wait for the release, and your ship should move to the right.";
             m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
@@ -399,8 +422,8 @@ public class Tutorial : MonoBehaviour
         else if (s == GameState.Released)
         {
             //m_DeviceToGraphicsFactor = 1f; // Reduce the amount the end effector moves to provide more convincing thruster physics
-            tutorialPrompt.text = "Your ship has been released! Now, move the end effector to a position near the center to recalibrate." + 
-                                    "For the tutorial, the game has paused to allow this, but otherwise you'll need to do this on the fly!" + 
+            tutorialPrompt.text = "Your ship has been released! Now, move the end effector to a position near the center to recalibrate." +
+                                    "For the tutorial, the game has paused to allow this, but otherwise you'll need to do this on the fly!" +
                                     "Once you're ready, press F to start firing thrusters and navigate to where your compass is pointing!";
             Time.timeScale = 0f;
             m_EndEffectorAvatar.transform.position = m_EndEffectorStartAvatar.transform.position;
@@ -409,16 +432,24 @@ public class Tutorial : MonoBehaviour
             m_EndEffectorAvatar.enabled = true;
             m_DecoupleEndEffectorFromAvatar = true;
         }
-        else
-            tutorialPrompt.text = "Great job! Now you've learned the basics of Slingshot, and are ready to play more challenging levels!";
+        else if (s == GameState.GameWon)
+        {
+            tutorialPrompt.text = "Great job! Now you've learned the basics of Slingshot, and are ready to play more challenging levels! " +
+                "Click anywhere to progress to the next level.";
+        }
+        else if (s == GameState.GameLost)
+        {
             Debug.Log($"Game Over!");
+        }
+            
+        
     }
 
     #region Drawing
     private void LateUpdate()
     {
         UpdateEndEffector();
-        if(m_IsCameraDynamic)
+        if (m_IsCameraDynamic)
         {
             Camera.main.transform.position = new Vector3(m_CurrentEndEffectorAvatar.transform.position.x
                 , m_CurrentEndEffectorAvatar.transform.position.y
@@ -464,6 +495,11 @@ public class Tutorial : MonoBehaviour
 
     private void SimulationStep()
     {
+        if (GameManager.GetState() == GameState.GameWon)
+        {
+            return;
+        }
+
         lock (m_ConcurrentDataLock)
         {
             m_RenderingForce = true;
@@ -483,15 +519,17 @@ public class Tutorial : MonoBehaviour
                     Vector2 gravity_force = new Vector2(0.0f, 0.0f);
                     Debug.Log("Gravity direction: " + (earthPos - effectorPos).normalized);
 
-                    if (!m_IsTethered)    {
+                    if (!m_IsTethered)
+                    {
                         gravity_force = (earthPos - effectorPos).normalized * (G * (mass_earth * mass_ship) / (r * r));
-                        m_EndEffectorForce[0] = -400*gravity_force[0];
-                        m_EndEffectorForce[1] = -400*gravity_force[1];
+                        m_EndEffectorForce[0] = -400 * gravity_force[0];
+                        m_EndEffectorForce[1] = -400 * gravity_force[1];
                     }
-                    else    {
-                        Debug.Log("yyyyyyyyyyy");
-                        m_EndEffectorForce[0] = -500*m_EarthForce[0];
-                        m_EndEffectorForce[1] = -500*m_EarthForce[1];
+                    else
+                    {
+                        Debug.Log("Earthforce: " + m_EarthForce[0] + " " + m_EarthForce[1]);
+                        m_EndEffectorForce[0] = -500 * m_EarthForce[0];
+                        m_EndEffectorForce[1] = -500 * m_EarthForce[1];
                     }
 
                 }
@@ -540,22 +578,27 @@ public class Tutorial : MonoBehaviour
                         m_EndEffectorForce[1] = 0f;
                     }
 
-                    if (m_FiringThrusters)  {
+                    if (m_FiringThrusters)
+                    {
 
                         // When thrusters are fired, only render the force caused by them
                         m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
                         m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
 
-                        if (currentFuel / fuel < 0.1f)  {
+                        if (currentFuel / fuel < 0.1f)
+                        {
                             m_EndEffectorHorizontalThrustForce *= 0.5f * currentFuel / fuel;
                             m_EndEffectorVerticalThrustForce *= 0.5f * currentFuel / fuel;
-                        } else  {
+                        }
+                        else
+                        {
                             m_EndEffectorHorizontalThrustForce *= 0.99f;
                             m_EndEffectorVerticalThrustForce *= 0.99f;
                         }
 
                     }
-                    else    {
+                    else
+                    {
                         m_EndEffectorForce[0] = 0f;
                         m_EndEffectorForce[1] = 0f;
                     }
@@ -612,8 +655,9 @@ public class Tutorial : MonoBehaviour
         //    * (G * (mass_earth * mass_moon) / (r * r));
         m_EarthForce = new Vector2(0f, 0f);
         //m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
-        if (GameManager.GetState() == GameState.Released)   {
-            
+        if (GameManager.GetState() == GameState.Released)
+        {
+
             // We want the spaceship to move under the influence of gravity
             float r = Vector2.Distance(m_Earth.transform.position, m_CurrentEndEffectorAvatar.transform.position);
             Vector2 m_EarthShipForce = (m_Earth.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_earth * mass_ship) / (r * r));
@@ -625,9 +669,10 @@ public class Tutorial : MonoBehaviour
             //m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_MoonShipForce);
 
             // If the ship has just been released, a small force is applied towards the right
-            if (m_JustReleased) {
+            if (m_JustReleased)
+            {
                 m_JustReleased = false;
-                m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2 (5f, 0));
+                m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2(5f, 0));
             }
         }
         // Debug.Log(r);
@@ -652,7 +697,8 @@ public class Tutorial : MonoBehaviour
         //position *= m_WorldSize.x / 0.24f;
         if (GameManager.GetState() != GameState.Released)
             m_CurrentEndEffectorAvatar.transform.position = position;
-        else if (GameManager.GetState() == GameState.Released && m_FiringThrusters) {
+        else if (GameManager.GetState() == GameState.Released && m_FiringThrusters)
+        {
             // when released, we want the avatar to move by an amount proportional to the change in position of the end effector
             float deltaX = position.x - LastPos_x;
             float deltaY = position.y - LastPos_y;
@@ -660,15 +706,23 @@ public class Tutorial : MonoBehaviour
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(20f * new Vector2(0f, deltaY));
         }
 
+
+        //Debug.Log(m_CurrentEndEffectorAvatar.transform.position.y);
+
+        if (Mathf.Abs(m_CurrentEndEffectorAvatar.transform.position.x) > m_MapAbsBound.x ||
+            Mathf.Abs(m_CurrentEndEffectorAvatar.transform.position.y) > m_MapAbsBound.y)
+        {
+            GameManager.UpdateGameState(GameState.GameLost);
+        }
         // float m = Mathf.Max(1.0f, CalculateMagnitude(m_EndEffectorForce));
         // m_EndEffectorArrowAvatar.transform.localScale = Vector3.Scale(
         //     m_InitialArrowScale,
         //     new Vector3(1, m, 1)
         // );
 
-        if(GameManager.GetState() == GameState.Freemovement)
+        if (GameManager.GetState() == GameState.Freemovement)
         {
-            if(position.x <= m_InitialSpaceshipXPosition)
+            if (position.x <= m_InitialSpaceshipXPosition)
             {
                 GameManager.UpdateGameState(GameState.Slingshot);
             }
@@ -711,22 +765,25 @@ public class Tutorial : MonoBehaviour
             m_EndEffectorHorizontalThrustForce = m_thrusterStiffness * (position.x - m_anchorPointX);
             m_EndEffectorVerticalThrustForce = m_thrusterStiffness * (position.y - m_anchorPointY);
 
-            if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.005)   {
+            if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.005)
+            //if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.01)
+            {
                 Debug.Log("Game Won!");
                 GameManager.UpdateGameState(GameState.GameWon);
             }
 
-            
+
         }
-        else if (!m_FiringThrusters)    {
-        EngineFire_Down.SetActive(false);
-        EngineFire_Up.SetActive(false);
-        EngineFire_Left.SetActive(false);
-        EngineFire_Right.SetActive(false);
-    }
+        else if (!m_FiringThrusters)
+        {
+            EngineFire_Down.SetActive(false);
+            EngineFire_Up.SetActive(false);
+            EngineFire_Left.SetActive(false);
+            EngineFire_Right.SetActive(false);
+        }
         LastPos_x = position.x;
         LastPos_y = position.y;
-        
+
     }
 
     private float[] DeviceToGraphics(float[] position)
