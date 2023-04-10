@@ -129,7 +129,7 @@ public class Slingshot : MonoBehaviour
     int cur_cel;
     Vector2[] planet_vel;
     float alpha;
-    int fuel;
+    //int fuel;
 
     [SerializeField]
     public const float gravitationalConstant = 1000f;
