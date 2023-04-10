@@ -582,7 +582,6 @@ public class Tutorial : MonoBehaviour
             if (m_HaplyBoard.DataAvailable())
             {
                 m_WidgetOne.DeviceReadData();
-
                 m_WidgetOne.GetDeviceAngles(ref m_Angles);
                 m_WidgetOne.GetDevicePosition(m_Angles, m_EndEffectorPosition);
 
@@ -693,11 +692,11 @@ public class Tutorial : MonoBehaviour
                 m_EndEffectorPosition = DeviceToGraphics(m_EndEffectorPosition);
             }
 
-            if(m_HapticFeedbackEnabled)
+            if (m_HapticFeedbackEnabled)
             {
                 m_WidgetOne.SetDeviceTorques(m_EndEffectorForce, m_Torques);
-                m_WidgetOne.DeviceWriteTorques();
             }
+            m_WidgetOne.DeviceWriteTorques();
 
             m_RenderingForce = false;
             m_Steps++;
@@ -767,6 +766,7 @@ public class Tutorial : MonoBehaviour
     #region Utilities
     private void UpdateEndEffector()
     {
+        if (GameManager.GameEnded()) return;
         //var position = m_EndEffectorAvatar.transform.position;
         var position = new Vector3();
 
