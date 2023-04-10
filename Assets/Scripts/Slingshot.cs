@@ -126,7 +126,8 @@ public class Slingshot : MonoBehaviour
     planet[] planet_vals;
     int cur_cel;
     Vector2[] planet_vel;
-
+    float alpha;
+    int fuel;
 
     [SerializeField]
     public const float gravitationalConstant = 1000f;
@@ -180,6 +181,9 @@ public class Slingshot : MonoBehaviour
         m_ConcurrentDataLock = new object();
         m_InitialArrowScale = m_EndEffectorArrowAvatar.transform.localScale;
         GameManager.OnGameStateChanged += OnGameStateChanged;
+        int LayerIgnoreAsteroid = LayerMask.NameToLayer("Ignore Asteroid");
+        m_EndEffectorAvatar.gameObject.layer = LayerIgnoreAsteroid;
+        m_EndEffectorStartAvatar.gameObject.layer = LayerIgnoreAsteroid;
     }
 
     private void Start()
@@ -188,12 +192,9 @@ public class Slingshot : MonoBehaviour
         celestials = GameObject.FindGameObjectsWithTag("Celestial");
         planet_vals = FindObjectsOfType<planet>();
         ship_val = FindObjectOfType<ship_class>();
-        //planet_vel = new Vector2[celestials.Length];
-        //int size = celestials.Length;
-        //Time.fixedDeltaTime = physicsTimeStep;
-        //Debug.Log("Setting fixedDeltaTime to: " + gravitationalConstant);
+        alpha = 0.5f;
+        fuel = 1;
         Application.targetFrameRate = 60;
-
         
 
         m_HaplyBoard.Initialize();
@@ -392,6 +393,8 @@ public class Slingshot : MonoBehaviour
             m_EndEffectorStartAvatar.enabled = false;
             m_EndEffectorAvatar.enabled = true;
             m_DecoupleEndEffectorFromAvatar = true;
+            int LayerAsteroid = LayerMask.NameToLayer("Asteroid");
+            m_EndEffectorAvatar.gameObject.layer = LayerAsteroid;
         }
         else
             Debug.Log($"Game Over!");
@@ -462,8 +465,9 @@ public class Slingshot : MonoBehaviour
                 if (GameManager.GetState() == GameState.Freemovement)
                 {
                     if (m_IsTethered){
-                        // Using left and right arrows one can audition the planets 
-                        m_EndEffectorForce[0] = 400*planet_vals[cur_cel].grav.x;
+                        // Using left and right arrows one can audition the planets
+                        /* TODO: Adjust Values of Gravity*/
+                        m_EndEffectorForce[0] = 400 * planet_vals[cur_cel].grav.x;
                         m_EndEffectorForce[1] = 400 * planet_vals[cur_cel].grav.y;
                     }
                     //Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
@@ -527,20 +531,16 @@ public class Slingshot : MonoBehaviour
                     //    m_EndEffectorForce[1] = 0f;
                     //}
 
+                    /* TODO: Adjust Values of Gravity and thrustors*/
                     if (m_FiringThrusters)  {
-                        // When thrusters are fired, only render the force caused by 
-                        // WHY?
-                        // If there is problems rending both gravitational and thruster forces, then we need to balance them better,
-                        // give enough headroom for the thrusters to be added ontop of the gravitational forces
+                        m_EndEffectorForce[0] += 20 * m_EndEffectorHorizontalThrustForce*(1-alpha);
+                        m_EndEffectorForce[1] += 20 * m_EndEffectorVerticalThrustForce*(1-alpha);
 
-                        m_EndEffectorForce[0] += 20 * m_EndEffectorHorizontalThrustForce;
-                        m_EndEffectorForce[1] += 20 * m_EndEffectorVerticalThrustForce;
-
-                        m_EndEffectorHorizontalThrustForce = 5f;
-                        m_EndEffectorVerticalThrustForce = 5;
+                        m_EndEffectorHorizontalThrustForce *= .99f;
+                        m_EndEffectorVerticalThrustForce *= .99f;
                     }
-                    m_EndEffectorForce[0] += ship_val.gravitational_forces.x;
-                    m_EndEffectorForce[1] += ship_val.gravitational_forces.y; 
+                    m_EndEffectorForce[0] += ship_val.gravitational_forces.x*alpha;
+                    m_EndEffectorForce[1] += ship_val.gravitational_forces.y*alpha; 
                     //else    {
                     //    m_EndEffectorForce[0] = 0f;
                     //    m_EndEffectorForce[1] = 0f;
