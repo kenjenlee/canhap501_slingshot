@@ -40,6 +40,10 @@ public class GameManager : MonoBehaviour
                 break;
             case GameState.GameWon:
                 break;
+            case GameState.GameLostBoundsExceeded:
+                break;
+            case GameState.GameLostFuelDrained:
+                break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
         }
@@ -51,6 +55,19 @@ public class GameManager : MonoBehaviour
     {
         return _state;
     }
+
+    public static bool GameEnded()
+    {
+        return _state == GameState.GameWon ||
+            _state == GameState.GameLostFuelDrained ||
+            _state == GameState.GameLostBoundsExceeded;
+    }
+
+    public static bool GameLost()
+    {
+        return _state == GameState.GameLostFuelDrained ||
+            _state == GameState.GameLostBoundsExceeded;
+    }
 }
 
 
@@ -59,5 +76,6 @@ public enum GameState {
     Slingshot,
     Released,
     GameWon,
-    GameLost
+    GameLostBoundsExceeded,
+    GameLostFuelDrained
 }

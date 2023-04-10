@@ -182,9 +182,13 @@ public class Tutorial : MonoBehaviour
     [SerializeField] private TextMeshProUGUI hapticFeedbackStatus;
     [SerializeField] private TextMeshProUGUI tutorialPrompt;
 
+    ////////  Scene reloading ////////
+    private bool m_Reloading = false;
+
     #region Setup
     private void Awake()
     {
+        Debug.Log("In awake");
         m_ConcurrentDataLock = new object();
         m_InitialArrowScale = m_EndEffectorArrowAvatar.transform.localScale;
         GameManager.OnGameStateChanged += OnGameStateChanged;
@@ -194,6 +198,7 @@ public class Tutorial : MonoBehaviour
 
     private void Start()
     {
+        Debug.Log("In start");
         Debug.Log($"Screen.width: {Screen.width}");
 
         Application.targetFrameRate = 60;
@@ -233,6 +238,8 @@ public class Tutorial : MonoBehaviour
         // Initial texts
         hapticFeedbackStatus.text = m_IsTethered ? "Haptic Feedback (Enabled)" : "Haptic Feedback (Disabled)";
 
+        tutorialPrompt.text = "Let's get started with Slingshot! Right now, you're in 'Unrestricted Free Movement' " +
+            "- that means you can move the end-effector around through space without any forces. To turn on gravity, press T.";
 
     }
 
@@ -242,23 +249,36 @@ public class Tutorial : MonoBehaviour
         if (m_FiringThrusters)
         {
             currentFuel -= fuelBurnRate * Time.deltaTime;
+            if(currentFuel < 0f)
+            {
+                GameManager.UpdateGameState(GameState.GameLostFuelDrained);
+            }
         }
     }
 
     private void Update()
     {
-        fuelSlider.value = currentFuel / fuel;
-        earthPos = new Vector2(m_Earth.transform.position[0], m_Earth.transform.position[1]);
-        Gravity();
-
-        if(GameManager.GetState() == GameState.GameWon)
+        if (GameManager.GetState() == GameState.GameWon)
         {
-            if(Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0))
             {
                 SceneManager.LoadScene("Slingshot_solar");
             }
             return;
+        } else if (GameManager.GameLost())
+        {
+            if (Input.GetMouseButtonDown(0) && !m_Reloading)
+            {
+                m_Reloading = true;
+                tutorialPrompt.text = "Reloading scene... Please don't move or provide any input.";
+                Debug.Log("Calling reload");
+                StartCoroutine(Reload());
+            }
         }
+
+        fuelSlider.value = currentFuel / fuel;
+        earthPos = new Vector2(m_Earth.transform.position[0], m_Earth.transform.position[1]);
+        Gravity();
 
         if (Input.GetKeyDown(KeyCode.T))
         {
@@ -437,18 +457,28 @@ public class Tutorial : MonoBehaviour
             tutorialPrompt.text = "Great job! Now you've learned the basics of Slingshot, and are ready to play more challenging levels! " +
                 "Click anywhere to progress to the next level.";
         }
-        else if (s == GameState.GameLost)
+        else if (s == GameState.GameLostBoundsExceeded)
         {
             Debug.Log($"Game Over!");
+            tutorialPrompt.text = "You lost due to exceeding the bounds of the level :( Please reset the end effector and click to restart the tutorial!";
         }
-            
-        
+        else if (s == GameState.GameLostFuelDrained)
+        {
+            Debug.Log($"Game Over!");
+            tutorialPrompt.text = "You lost due to having no fuel left :( Please reset the end effector and click to restart the tutorial!";
+        }
+
+        if(GameManager.GameEnded())
+        {
+            RemoveHapticFeedback();
+        }
+
     }
 
     #region Drawing
     private void LateUpdate()
     {
-        UpdateEndEffector();
+        if(!GameManager.GameEnded())    UpdateEndEffector();
         if (m_IsCameraDynamic)
         {
             Camera.main.transform.position = new Vector3(m_CurrentEndEffectorAvatar.transform.position.x
@@ -495,7 +525,7 @@ public class Tutorial : MonoBehaviour
 
     private void SimulationStep()
     {
-        if (GameManager.GetState() == GameState.GameWon)
+        if (GameManager.GameEnded())
         {
             return;
         }
@@ -627,11 +657,10 @@ public class Tutorial : MonoBehaviour
     /// </summary>
     private void OnDestroy()
     {
-        lock (m_ConcurrentDataLock)
-        {
-            m_WidgetOne.SetDeviceTorques(new float[2] { 0f, 0f }, m_Torques);
-            m_WidgetOne.DeviceWriteTorques();
-        }
+        RemoveHapticFeedback();
+        // Have to unsubscribe, otherwise there will be issues with reloading scene.
+        // https://forum.unity.com/threads/missingreferenceexception-when-scene-is-reloaded.533658/
+        GameManager.OnGameStateChanged -= OnGameStateChanged;
     }
     #endregion
 
@@ -709,10 +738,12 @@ public class Tutorial : MonoBehaviour
 
         //Debug.Log(m_CurrentEndEffectorAvatar.transform.position.y);
 
-        if (Mathf.Abs(m_CurrentEndEffectorAvatar.transform.position.x) > m_MapAbsBound.x ||
-            Mathf.Abs(m_CurrentEndEffectorAvatar.transform.position.y) > m_MapAbsBound.y)
+        if (!GameManager.GameEnded() &&
+            (Mathf.Abs(m_CurrentEndEffectorAvatar.transform.position.x) > m_MapAbsBound.x ||
+            Mathf.Abs(m_CurrentEndEffectorAvatar.transform.position.y) > m_MapAbsBound.y))
         {
-            GameManager.UpdateGameState(GameState.GameLost);
+            Debug.Log(GameManager.GameEnded());
+            GameManager.UpdateGameState(GameState.GameLostBoundsExceeded);
         }
         // float m = Mathf.Max(1.0f, CalculateMagnitude(m_EndEffectorForce));
         // m_EndEffectorArrowAvatar.transform.localScale = Vector3.Scale(
@@ -804,5 +835,24 @@ public class Tutorial : MonoBehaviour
     {
         return Mathf.Abs(CalculateAbsMagnitude(num));
     }
+
+    private IEnumerator Reload()
+    {
+        //Debug.Log("Reloading scene");
+        yield return new WaitForSeconds(3);
+        SceneManager.UnloadSceneAsync(SceneManager.GetActiveScene().buildIndex);
+        Resources.UnloadUnusedAssets();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex, LoadSceneMode.Single);
+    }
+
+    private void RemoveHapticFeedback()
+    {
+        lock (m_ConcurrentDataLock)
+        {
+            m_WidgetOne.SetDeviceTorques(new float[2] { 0f, 0f }, m_Torques);
+            m_WidgetOne.DeviceWriteTorques();
+        }
+    }
+
     #endregion
 }
