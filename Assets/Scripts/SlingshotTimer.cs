@@ -2,11 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System;
 
 public class SlingshotTimer : MonoBehaviour
 {
+    public static SlingshotTimer Instance;
+    private static float _slingshotTimeLeft;
+
     [SerializeField]
-    public float secondsToRelease = 5f;
+    public static float secondsToRelease = 5f;
 
     private float m_timeRemaining;
 
@@ -14,6 +18,16 @@ public class SlingshotTimer : MonoBehaviour
 
     // private TMPro.TextMeshProUGUI m_tmp;
     [SerializeField] private TextMeshProUGUI m_tmp;
+
+    public static event Action OnSlingshotTimerEnd;
+
+    private bool m_run = false;
+
+    private void Awake()
+    {
+        Instance = this;
+        GameManager.OnGameStateChanged += OnGameStateChanged;
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -26,13 +40,12 @@ public class SlingshotTimer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(GameManager.GetState() == GameState.Slingshot)
+        if(m_run)
         {
             if (m_timeRemaining > 0)
             {
                 m_timeRemaining -= Time.deltaTime;
                 // REF: https://forum.unity.com/threads/convert-float-to-a-string.28332/
-
                 t = (int)m_timeRemaining;
                 m_tmp.text = t.ToString();
             } else {
@@ -41,5 +54,15 @@ public class SlingshotTimer : MonoBehaviour
             }
         }
         
+    }
+
+    private void OnGameStateChanged(GameState s)
+    {
+        m_run = s == GameState.Slingshot;
+    }
+
+    public static float GetSlingshotTimeLeft()
+    {
+        return _slingshotTimeLeft;
     }
 }
