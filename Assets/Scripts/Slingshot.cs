@@ -255,7 +255,7 @@ public class Slingshot : MonoBehaviour
     {
         fuelSlider.value = currentFuel / fuel;
 
-        Gravity();
+        //Gravity();
         if (Input.GetKeyDown(KeyCode.H))
         {
             m_HapticsOn = !m_HapticsOn;
