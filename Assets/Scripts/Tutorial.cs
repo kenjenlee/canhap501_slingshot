@@ -25,7 +25,13 @@ public class Tutorial : MonoBehaviour
         Start,
         TurnOnHapticFeedback,
         TurnOnTetheredMode,
-        TurnOffTetheredMode
+        TurnOffTetheredMode,
+        AboutToEnterSlingshot,
+        AboutToEnterSlingshot2,
+        JustEnteredSlingshot,
+        JustReleased,
+        JustReleased2,
+        Released
         //Slingshot,
         //Released,
         //GameWon,
@@ -123,7 +129,6 @@ public class Tutorial : MonoBehaviour
     private Vector3 m_InitialArrowScale;
 
     private Vector2 m_ReleasedForce = new Vector2(0f, 0f);
-    private bool m_JustReleased = true;
     private bool m_DecoupleEndEffectorFromAvatar = false;
     private bool m_FiringThrusters = false;
     private float m_anchorPointX = 0f;
@@ -202,6 +207,9 @@ public class Tutorial : MonoBehaviour
 
     ////////  Scene reloading ////////
     private bool m_Reloading = false;
+
+    ////////  Slingshot stuff ////////
+    private float xDiff, yDiff;
 
     #region Setup
     private void Awake()
@@ -295,11 +303,13 @@ public class Tutorial : MonoBehaviour
                 Debug.Log("Calling reload");
                 StartCoroutine(Reload());
             }
+            return;
         }
 
         fuelSlider.value = currentFuel / fuel;
         earthPos = new Vector2(m_Earth.transform.position[0], m_Earth.transform.position[1]);
         Gravity();
+
 
         if (Input.GetKeyDown(KeyCode.H))
         {
@@ -353,21 +363,36 @@ public class Tutorial : MonoBehaviour
         {
             tutorialPrompt.text = "The orange bar shows the amount of fuel you have remaining. Failing to get to the destination " +
                                     "before the bar runs out will result in GAME OVER. Good luck!";
-            if (Time.timeScale == 0)
-            {
-                Time.timeScale = 1f;
-            }
+            //if (Time.timeScale == 0)
+            //{
+            //    Time.timeScale = 1f;
+            //}
             m_FiringThrusters = true;
             thrustersStatus.text = "Thrusters (Enabled)";
             m_anchorPointX = m_EndEffectorPosition[0];
             m_anchorPointY = m_EndEffectorPosition[1];
         }
-        else if (Input.GetKeyDown(KeyCode.S))
+        else if (Input.GetKeyDown(KeyCode.S) && (GameManager.GetState() == GameState.Released))
         {
             m_FiringThrusters = false;
             thrustersStatus.text = "Thrusters (Disabled)";
             m_anchorPointX = 0f;
             m_anchorPointY = 0f;
+        }
+        else if(Input.GetMouseButtonDown(0))
+        {
+            if(m_TutorialStage == TutorialStage.AboutToEnterSlingshot)
+            {
+                //GameManager.UpdateGameState(GameState.Slingshot);
+                tutorialPrompt.text = "Please move the end effector to where the spaceship is.";
+                m_TutorialStage = TutorialStage.AboutToEnterSlingshot2;
+            }
+            else if(m_TutorialStage == TutorialStage.JustReleased)
+            {
+                m_TutorialStage = TutorialStage.JustReleased2;
+                tutorialPrompt.text = "The orange bar shows the amount of fuel you have remaining. Failing to get to the destination " +
+                                    "before the bar runs out will result in GAME OVER. Good luck!";
+            }
         }
     }
 
@@ -439,8 +464,8 @@ public class Tutorial : MonoBehaviour
                 , 0f);
 
             m_EndEffectorStartAvatar.transform.localScale = new Vector3(
-                m_EndEffectorRadius,
-                m_EndEffectorRadius,
+                m_EndEffectorRadius * 4,
+                m_EndEffectorRadius * 4,
                 1f
             );
 
@@ -480,25 +505,24 @@ public class Tutorial : MonoBehaviour
         else if (s == GameState.Slingshot)
         {
             tutorialPrompt.text = "Great! Wait for the release, and your ship should move to the right.";
-            m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
-            m_EndEffectorStartAvatar.enabled = false;
-            m_EndEffectorAvatar.enabled = true;
-            fuelSlider.gameObject.SetActive(true);
-            m_EndEffectorArrowAvatar.enabled = true;
+            
         }
         else if (s == GameState.Released)
         {
             //m_DeviceToGraphicsFactor = 1f; // Reduce the amount the end effector moves to provide more convincing thruster physics
             tutorialPrompt.text = "Your ship has been released! Now, move the end effector to a position near the center to recalibrate." +
                                     "For the tutorial, the game has paused to allow this, but otherwise you'll need to do this on the fly!" +
-                                    "Once you're ready, press F to start firing thrusters and navigate to where your compass is pointing!";
-            Time.timeScale = 0f;
+                                    "In this released mode, you can press F to start firing thrusters, and S to stop firing thrusters so that " +
+                                    "you can recalibrate your end effector. The goal is to navigate to where your compass (the yellow arrow) is pointing!";
+                                    
+            //Time.timeScale = 0f;
             m_EndEffectorAvatar.transform.position = m_EndEffectorStartAvatar.transform.position;
             m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
             m_EndEffectorStartAvatar.enabled = false;
             m_EndEffectorAvatar.enabled = true;
             m_DecoupleEndEffectorFromAvatar = true;
             m_EndEffectorArrowAvatar.enabled = false;
+            m_TutorialStage = TutorialStage.JustReleased;
         }
         else if (s == GameState.GameWon)
         {
@@ -573,10 +597,10 @@ public class Tutorial : MonoBehaviour
 
     private void SimulationStep()
     {
-        if (GameManager.GameEnded())
-        {
-            return;
-        }
+        if (GameManager.GameEnded() ||
+            m_TutorialStage == TutorialStage.AboutToEnterSlingshot ||
+            m_TutorialStage == TutorialStage.JustReleased
+            ) return;
 
         lock (m_ConcurrentDataLock)
         {
@@ -648,9 +672,8 @@ public class Tutorial : MonoBehaviour
                 }
                 else if (GameManager.GetState() == GameState.Released)
                 {
-                    if (m_JustReleased)
+                    if (m_TutorialStage == TutorialStage.JustReleased2)
                     {
-                        //m_JustReleased = false;
                         // m_ReleasedForce[0] = m_EndEffectorForce[0];
                         // m_ReleasedForce[1] = m_EndEffectorForce[1];
                         // m_EndEffectorForce[0] = m_ReleasedForce[0];
@@ -752,12 +775,6 @@ public class Tutorial : MonoBehaviour
             Vector2 m_MoonShipForce = (m_Moon.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_moon * mass_ship) / (r * r));
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_MoonShipForce);
 
-            // If the ship has just been released, a small force is applied towards the right
-            if (m_JustReleased)
-            {
-                m_JustReleased = false;
-                m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2(5f, 0));
-            }
         }
         // Debug.Log(r);
         // Debug.Log((m_Earth.transform.position - m_Moon.transform.position).normalized);
@@ -769,7 +786,15 @@ public class Tutorial : MonoBehaviour
     #region Utilities
     private void UpdateEndEffector()
     {
-        if (GameManager.GameEnded()) return;
+        if (GameManager.GameEnded() ||
+            m_TutorialStage == TutorialStage.AboutToEnterSlingshot
+            ) return;
+        else if (m_TutorialStage == TutorialStage.JustReleased ||
+            (GameManager.GetState() == GameState.Released && m_TutorialStage == TutorialStage.JustEnteredSlingshot))
+        {
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().velocity = new Vector2(0f, 0f);
+            return;
+        }
         //var position = m_EndEffectorAvatar.transform.position;
         var position = new Vector3();
 
@@ -805,15 +830,34 @@ public class Tutorial : MonoBehaviour
 
         if (GameManager.GetState() == GameState.Freemovement)
         {
-            if (position.x <= m_InitialSpaceshipXPosition)
+            if (position.x <= m_WallPosition[0] &&
+                m_TutorialStage == TutorialStage.TurnOffTetheredMode)
             {
+                m_TutorialStage = TutorialStage.AboutToEnterSlingshot;
+                tutorialPrompt.text = "You are about to enter the slingshot. The game has been paused to introduce to you everything you should know. " +
+                "You are now docked into the spaceship, and your goal is to align the spaceship so that you can get to the final goal. " +
+                "The yellow arrow is your compass, showing you where the final destination is. " +
+                "The red arrow shows where the slingshot will sling you, and the size of the arrow indicates the amount " +
+                "of force applied. You have 5 seconds to choose a position before getting slung! " +
+                "Next, click anywhere and then move the end effector to the spaceship.";
+                m_EndEffectorAvatar.enabled = true;
+                fuelSlider.gameObject.SetActive(true);
+                m_EndEffectorArrowAvatar.enabled = true;
+            }
+            else if (position.x <= m_InitialSpaceshipXPosition &&
+                m_TutorialStage == TutorialStage.AboutToEnterSlingshot2)
+            {
+                m_TutorialStage = TutorialStage.JustEnteredSlingshot;
+                tutorialPrompt.text = "Five seconds till getting releaased, align yourself!";
+                m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
+                m_EndEffectorStartAvatar.enabled = false;
                 GameManager.UpdateGameState(GameState.Slingshot);
             }
         }
         else if(GameManager.GetState() == GameState.Slingshot)
         {
-            var xDiff = m_WallPosition[0] - m_CurrentEndEffectorAvatar.transform.position.x;
-            var yDiff = (-m_WorldSize.y / 2f - m_EndEffectorRadius) -
+            xDiff = m_WallPosition[0] - m_CurrentEndEffectorAvatar.transform.position.x;
+            yDiff = (-m_WorldSize.y / 2f - m_EndEffectorRadius) -
                 m_CurrentEndEffectorAvatar.transform.position.y;
             var angle = Mathf.Atan2(yDiff, xDiff) - Mathf.PI / 4f;
             m_EndEffectorArrowAvatar.transform.localRotation =
@@ -832,43 +876,56 @@ public class Tutorial : MonoBehaviour
                 new Vector3(m, m, 1)
             );
         }
-        else if (GameManager.GetState() == GameState.Released && m_FiringThrusters)
+        else if (GameManager.GetState() == GameState.Released)
+            
         {
-            if (LastPos_x + 0.009 < position.x)
+            // If the ship has just been released, a small force is applied towards the right
+            if (m_TutorialStage == TutorialStage.JustReleased2)
             {
-                EngineFire_Left.SetActive(true);
+                m_TutorialStage = TutorialStage.Released;
+                Debug.Log(xDiff + " " + yDiff);
+                m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2(50f * xDiff, 50f * yDiff));
             }
 
-            else if (LastPos_x == position.x)
+            if (m_FiringThrusters)
             {
-                EngineFire_Left.SetActive(false);
-                EngineFire_Right.SetActive(false);
+                if (LastPos_x + 0.009 < position.x)
+                {
+                    EngineFire_Left.SetActive(true);
+                }
+
+                else if (LastPos_x == position.x)
+                {
+                    EngineFire_Left.SetActive(false);
+                    EngineFire_Right.SetActive(false);
+                }
+
+                else if (LastPos_x - 0.009 > position.x)
+                {
+                    EngineFire_Right.SetActive(true);
+                }
+
+
+                if (LastPos_y - 0.009 > position.y)
+                {
+                    EngineFire_Up.SetActive(true);
+                }
+
+                else if (LastPos_y == position.y)
+                {
+                    EngineFire_Up.SetActive(false);
+                    EngineFire_Down.SetActive(false);
+                }
+
+                else if (LastPos_y + 0.009 < position.y)
+                {
+                    EngineFire_Down.SetActive(true);
+                }
+
+                m_EndEffectorHorizontalThrustForce = m_thrusterStiffness * (position.x - m_anchorPointX);
+                m_EndEffectorVerticalThrustForce = m_thrusterStiffness * (position.y - m_anchorPointY);
+
             }
-
-            else if (LastPos_x - 0.009 > position.x)
-            {
-                EngineFire_Right.SetActive(true);
-            }
-
-
-            if (LastPos_y - 0.009 > position.y)
-            {
-                EngineFire_Up.SetActive(true);
-            }
-
-            else if (LastPos_y == position.y)
-            {
-                EngineFire_Up.SetActive(false);
-                EngineFire_Down.SetActive(false);
-            }
-
-            else if (LastPos_y + 0.009 < position.y)
-            {
-                EngineFire_Down.SetActive(true);
-            }
-
-            m_EndEffectorHorizontalThrustForce = m_thrusterStiffness * (position.x - m_anchorPointX);
-            m_EndEffectorVerticalThrustForce = m_thrusterStiffness * (position.y - m_anchorPointY);
 
             if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.005)
             //if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.01)
