@@ -402,6 +402,7 @@ public class Tutorial : MonoBehaviour
             EngineFire_Right.SetActive(false);
             EngineFire_Up.SetActive(false);
             EngineFire_Down.SetActive(false);
+            m_EndEffectorArrowAvatar.enabled = false;
 
             //m_WorldSize.x = 0.4f;
             //m_WorldSize.y = 0.4f;
@@ -483,6 +484,7 @@ public class Tutorial : MonoBehaviour
             m_EndEffectorStartAvatar.enabled = false;
             m_EndEffectorAvatar.enabled = true;
             fuelSlider.gameObject.SetActive(true);
+            m_EndEffectorArrowAvatar.enabled = true;
         }
         else if (s == GameState.Released)
         {
@@ -496,6 +498,7 @@ public class Tutorial : MonoBehaviour
             m_EndEffectorStartAvatar.enabled = false;
             m_EndEffectorAvatar.enabled = true;
             m_DecoupleEndEffectorFromAvatar = true;
+            m_EndEffectorArrowAvatar.enabled = false;
         }
         else if (s == GameState.GameWon)
         {
@@ -798,11 +801,7 @@ public class Tutorial : MonoBehaviour
             Debug.Log(GameManager.GameEnded());
             GameManager.UpdateGameState(GameState.GameLostBoundsExceeded);
         }
-        // float m = Mathf.Max(1.0f, CalculateMagnitude(m_EndEffectorForce));
-        // m_EndEffectorArrowAvatar.transform.localScale = Vector3.Scale(
-        //     m_InitialArrowScale,
-        //     new Vector3(1, m, 1)
-        // );
+        
 
         if (GameManager.GetState() == GameState.Freemovement)
         {
@@ -810,6 +809,28 @@ public class Tutorial : MonoBehaviour
             {
                 GameManager.UpdateGameState(GameState.Slingshot);
             }
+        }
+        else if(GameManager.GetState() == GameState.Slingshot)
+        {
+            var xDiff = m_WallPosition[0] - m_CurrentEndEffectorAvatar.transform.position.x;
+            var yDiff = (-m_WorldSize.y / 2f - m_EndEffectorRadius) -
+                m_CurrentEndEffectorAvatar.transform.position.y;
+            var angle = Mathf.Atan2(yDiff, xDiff) - Mathf.PI / 4f;
+            m_EndEffectorArrowAvatar.transform.localRotation =
+                Quaternion.AngleAxis(angle * Mathf.Rad2Deg, Vector3.forward);
+            m_EndEffectorArrowAvatar.transform.localPosition = new Vector3(
+                4f * Mathf.Cos(angle),
+                4f * Mathf.Sin(angle),
+                0f
+                );
+
+            float forceMag = Vector2.SqrMagnitude(new Vector2(xDiff, yDiff));
+            Debug.Log(forceMag);
+            float m = forceMag * 15f + .8f;
+            m_EndEffectorArrowAvatar.transform.localScale = Vector3.Scale(
+                m_InitialArrowScale,
+                new Vector3(m, m, 1)
+            );
         }
         else if (GameManager.GetState() == GameState.Released && m_FiringThrusters)
         {
