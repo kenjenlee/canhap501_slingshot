@@ -44,7 +44,7 @@ public class gravity_sim : MonoBehaviour
         int size = celestials.Length;
         Time.fixedDeltaTime = physicsTimeStep;
         Debug.Log("Setting fixedDeltaTime to: " + gravitationalConstant);
-        ship_val.mass = 20f;
+        ship_val.mass = 200f;
         SetInitialVelocity();
     }
 

@@ -255,7 +255,6 @@ public class Slingshot : MonoBehaviour
     {
         fuelSlider.value = currentFuel / fuel;
 
-        //Gravity();
         if (Input.GetKeyDown(KeyCode.H))
         {
             m_HapticsOn = !m_HapticsOn;
@@ -498,6 +497,9 @@ public class Slingshot : MonoBehaviour
                         /* TODO: Adjust Values of Gravity*/
                         m_EndEffectorForce[0] = 400 * planet_vals[cur_cel].grav.x;
                         m_EndEffectorForce[1] = 400 * planet_vals[cur_cel].grav.y;
+                    } else  {
+                        m_EndEffectorForce[0] = 10000 * ship_val.gravitational_forces[0];
+                        m_EndEffectorForce[1] = 10000 * ship_val.gravitational_forces[1];
                     }
                     //Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
 
