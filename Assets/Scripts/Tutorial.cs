@@ -30,7 +30,7 @@ public class Tutorial : MonoBehaviour
         AboutToEnterSlingshot2,
         JustEnteredSlingshot,
         JustReleased,
-        TimeSlowed,
+        //TimeSlowed,
         Released
         //Slingshot,
         //Released,
@@ -290,8 +290,18 @@ public class Tutorial : MonoBehaviour
         m_EarthForce =
             (Vector2) (m_Earth.transform.position - m_Moon.transform.position).normalized
             * (G * (mass_earth * mass_moon) / (rMoon * rMoon));
-        Debug.Log("Force on moon = " + m_EarthForce[0] * 1e6 + ", " + m_EarthForce[1] * 1e6);
+        //Debug.Log("Force on moon = " + m_EarthForce[0] * 1e6 + ", " + m_EarthForce[1] * 1e6);
         m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
+
+        // If the ship has just been released, a small force is applied towards the right
+        if (m_TutorialStage == TutorialStage.JustReleased)
+        {
+            m_TutorialStage = TutorialStage.Released;
+            //Debug.Log(xDiff + " " + yDiff);
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().angularVelocity = 0f;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2(300f * xDiff, 300f * yDiff));
+        }
     }
 
     private void Update()
@@ -532,17 +542,17 @@ public class Tutorial : MonoBehaviour
         else if (s == GameState.Released)
         {
             //m_DeviceToGraphicsFactor = 1f; // Reduce the amount the end effector moves to provide more convincing thruster physics
-            tutorialPrompt.text = "Your ship has been released! Now, move the end effector to a position near the center to recalibrate." +
-                                    "For the tutorial, the game has paused to allow this, but otherwise you'll need to do this on the fly!" +
-                                    "In this released mode, you can press F to start firing thrusters, and S to stop firing thrusters so that " +
-                                    "you can recalibrate your end effector. The goal is to navigate to where your compass (the yellow arrow) is pointing!";
+            //tutorialPrompt.text = "Your ship has been released! Now, move the end effector to a position near the center to recalibrate." +
+            //                        "For the tutorial, the game has paused to allow this, but otherwise you'll need to do this on the fly!" +
+            //                        "In this released mode, you can press F to start firing thrusters, and S to stop firing thrusters so that " +
+            //                        "you can recalibrate your end effector. The goal is to navigate to where your compass (the yellow arrow) is pointing!";
                                     
-            Time.timeScale = 0.1f;
-            m_EndEffectorAvatar.transform.position = m_EndEffectorStartAvatar.transform.position;
-            m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
-            m_EndEffectorStartAvatar.enabled = false;
-            m_EndEffectorAvatar.enabled = true;
-            m_DecoupleEndEffectorFromAvatar = true;
+            //Time.timeScale = 0.1f;
+            //m_EndEffectorAvatar.transform.position = m_EndEffectorStartAvatar.transform.position;
+            //m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
+            //m_EndEffectorStartAvatar.enabled = false;
+            //m_EndEffectorAvatar.enabled = true;
+            //m_DecoupleEndEffectorFromAvatar = true;
             m_EndEffectorArrowAvatar.enabled = false;
             m_TutorialStage = TutorialStage.JustReleased;
         }
@@ -628,13 +638,14 @@ public class Tutorial : MonoBehaviour
                     float r = Vector2.Distance(earthPos, effectorPos);
                     // m_WallPenetration = new Vector2( 0f, m_WallPosition.y - (m_EndEffectorPosition[1] + m_EndEffectorRadius) );
                     Vector2 gravity_force = new Vector2(0.0f, 0.0f);
-                    Debug.Log("Gravity direction: " + (earthPos - effectorPos).normalized);
+                    //Debug.Log("Gravity direction: " + (earthPos - effectorPos).normalized);
 
                     if (!m_IsTethered)
                     {
                         gravity_force = (earthPos - effectorPos).normalized * (G * (mass_earth * mass_ship) / (r * r));
                         m_EndEffectorForce[0] = -400 * gravity_force[0];
                         m_EndEffectorForce[1] = -400 * gravity_force[1];
+                        //Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
                     }
                     else
                     {
@@ -776,12 +787,12 @@ public class Tutorial : MonoBehaviour
             // We want the spaceship to move under the influence of gravity
             float r = Vector2.Distance(m_Earth.transform.position, m_CurrentEndEffectorAvatar.transform.position);
             Vector2 m_EarthShipForce = (m_Earth.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_earth * mass_ship) / (r * r));
-            //m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_EarthShipForce);
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_EarthShipForce);
 
             // The moon also has gravitational influence on the ship (NOT IN THE TUTORIAL)
             r = Vector2.Distance(m_Moon.transform.position, m_CurrentEndEffectorAvatar.transform.position);
             Vector2 m_MoonShipForce = (m_Moon.transform.position - m_CurrentEndEffectorAvatar.transform.position).normalized * (G * (mass_moon * mass_ship) / (r * r));
-            //m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_MoonShipForce);
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(m_MoonShipForce);
 
         }
         // Debug.Log(r);
@@ -814,8 +825,8 @@ public class Tutorial : MonoBehaviour
             // when released, we want the avatar to move by an amount proportional to the change in position of the end effector
             float deltaX = position.x - LastPos_x;
             float deltaY = position.y - LastPos_y;
-            //m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(20f * new Vector2(deltaX, 0f));
-            //m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(20f * new Vector2(0f, deltaY));
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(20f * new Vector2(deltaX, 0f));
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(20f * new Vector2(0f, deltaY));
         }
 
 
@@ -850,7 +861,7 @@ public class Tutorial : MonoBehaviour
                 m_TutorialStage == TutorialStage.AboutToEnterSlingshot2)
             {
                 m_TutorialStage = TutorialStage.JustEnteredSlingshot;
-                tutorialPrompt.text = "Five seconds till getting releaased, align yourself!";
+                //tutorialPrompt.text = "Five seconds till getting releaased, align yourself!";
                 m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
                 m_EndEffectorStartAvatar.enabled = false;
                 GameManager.UpdateGameState(GameState.Slingshot);
@@ -871,7 +882,7 @@ public class Tutorial : MonoBehaviour
                 );
 
             float forceMag = Vector2.SqrMagnitude(new Vector2(xDiff, yDiff));
-            Debug.Log(forceMag);
+            //Debug.Log(forceMag);
             float m = forceMag * 15f + .8f;
             m_EndEffectorArrowAvatar.transform.localScale = Vector3.Scale(
                 m_InitialArrowScale,
@@ -881,20 +892,7 @@ public class Tutorial : MonoBehaviour
         else if (GameManager.GetState() == GameState.Released)
             
         {
-            // If the ship has just been released, a small force is applied towards the right
-            if (m_TutorialStage == TutorialStage.JustReleased)
-            {
-                m_TutorialStage = TutorialStage.TimeSlowed;
-                Debug.Log(xDiff + " " + yDiff);
-                //m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
-                //m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().angularVelocity = 0f;
-                //m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2(50f * xDiff, 50f * yDiff));
-
-            } else if(m_TutorialStage == TutorialStage.TimeSlowed &&
-               m_CurrentEndEffectorAvatar.transform.position.x >= m_WallPosition[0])
-            {
-
-            }
+            
 
             if (m_FiringThrusters)
             {
@@ -936,9 +934,9 @@ public class Tutorial : MonoBehaviour
 
             }
 
-            if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.005)
-            //if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.01)
-            {
+            //if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.005)
+            if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.02)
+                {
                 Debug.Log("Game Won!");
                 GameManager.UpdateGameState(GameState.GameWon);
             }
