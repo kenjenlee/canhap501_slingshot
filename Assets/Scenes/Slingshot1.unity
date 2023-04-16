@@ -1551,7 +1551,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 793148749041878596, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_MacComPort
-      value: /dev/cu.usbmodem143301
+      value: /dev/cu.usbmodem144301
       objectReference: {fileID: 0}
     - target: {fileID: 793148749041878596, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_WindowsComPort
@@ -2600,7 +2600,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51b2aabca86db4485b8c77c9f2ee3b8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  secondsToRelease: 5
   m_tmp: {fileID: 1658265539}
 --- !u!114 &1769364548
 MonoBehaviour:
