@@ -332,8 +332,13 @@ MonoBehaviour:
   EngineFire_Right: {fileID: 215848215}
   EngineFire_Up: {fileID: 554898034}
   EngineFire_Down: {fileID: 5269380}
+  fuel: 100
+  fuelSlider: {fileID: 0}
+  fuelBurnRate: 1.5
   m_CameraStaticSize: 0.5
   m_CameraDynamicSize: 0.15
+  thrustersStatus: {fileID: 0}
+  hapticFeedbackStatus: {fileID: 0}
 --- !u!1001 &52958808
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1544,7 +1549,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 793148749041878596, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_MacComPort
-      value: /dev/cu.usbmodem12101
+      value: /dev/cu.usbmodem144301
       objectReference: {fileID: 0}
     - target: {fileID: 793148749041878596, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_WindowsComPort

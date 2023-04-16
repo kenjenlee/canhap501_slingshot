@@ -275,6 +275,13 @@ public class Tutorial : MonoBehaviour
                 GameManager.UpdateGameState(GameState.GameLostFuelDrained);
             }
         }
+        // Gravity forces added here
+        float rMoon = Vector2.Distance(m_Earth.transform.position, m_Moon.transform.position);
+        m_EarthForce =
+            (Vector2) (m_Earth.transform.position - m_Moon.transform.position).normalized
+            * (G * (mass_earth * mass_moon) / (rMoon * rMoon));
+        Debug.Log("Force on moon = " + m_EarthForce[0] * 1e6 + ", " + m_EarthForce[1] * 1e6);
+        m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
     }
 
     private void Update()
@@ -606,8 +613,8 @@ public class Tutorial : MonoBehaviour
                     {
                         float rMoon = Vector2.Distance(earthPos, moonPos);
                         gravity_force = (earthPos - moonPos).normalized * (G * (mass_earth * mass_moon) / (rMoon * rMoon));
-                        m_EndEffectorForce[0] = -400 * gravity_force[0];
-                        m_EndEffectorForce[1] = -400 * gravity_force[1];
+                        m_EndEffectorForce[0] = -1200 * gravity_force[0];
+                        m_EndEffectorForce[1] = -1200 * gravity_force[1];
                         //Debug.Log("Earthforce: " + m_EarthForce[0] + " " + m_EarthForce[1]);
                         //m_EndEffectorForce[0] = -500 * m_EarthForce[0];
                         //m_EndEffectorForce[1] = -500 * m_EarthForce[1];
@@ -731,13 +738,8 @@ public class Tutorial : MonoBehaviour
     private void Gravity()
     {
         //Debug.Log("Computing Gravity...\n");
-        float rMoon = Vector2.Distance(m_Earth.transform.position, m_Moon.transform.position);
-        m_EarthForce =
-            (m_Earth.transform.position - m_Moon.transform.position).normalized
-            * (G * (mass_earth * mass_moon) / (rMoon * rMoon));
-        m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
+        
 
-        m_EarthForce = new Vector2(0f, 0f);
         //m_Moon.GetComponent<Rigidbody2D>().AddForce(m_EarthForce);
         if (GameManager.GetState() == GameState.Released)
         {
