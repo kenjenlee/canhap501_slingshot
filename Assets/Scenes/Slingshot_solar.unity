@@ -675,6 +675,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6157184309739352928, guid: e2622cd89ea0a074186a0e6abd5dce28, type: 3}
+      propertyPath: m_TagString
+      value: EndEffectorAvatar
+      objectReference: {fileID: 0}
     - target: {fileID: 6157184309739352929, guid: e2622cd89ea0a074186a0e6abd5dce28, type: 3}
       propertyPath: m_Size.x
       value: 3
@@ -2471,6 +2475,21 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &1865612530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1865612528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7164967dae9a497492cf0433e7bb04a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gravitational_forces: {x: 0, y: 0}
+  mass: 200
+  fuel: 10
 --- !u!1001 &1916985815
 PrefabInstance:
   m_ObjectHideFlags: 0
