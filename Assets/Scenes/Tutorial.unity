@@ -167,8 +167,8 @@ MonoBehaviour:
   m_WallAvatar: {fileID: 1594177289}
   m_EndEffectorArrowAvatar: {fileID: 1439274651}
   m_EndEffectorRadius: 0.006
-  m_WallStiffness: 45000
-  m_WallAdditionalForce: {x: 0, y: 50000}
+  m_WallStiffness: 900
+  m_WallAdditionalForce: {x: 0, y: 0}
   m_WallOrientation: 1
   m_SlingshotRope: {fileID: 916280749}
   m_Earth: {fileID: 55298842}
@@ -1611,7 +1611,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 793148749041878596, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_MacComPort
-      value: /dev/cu.usbmodem144301
+      value: /dev/cu.usbmodem143201
       objectReference: {fileID: 0}
     - target: {fileID: 793148749041878596, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_WindowsComPort

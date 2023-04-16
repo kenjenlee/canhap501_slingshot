@@ -85,7 +85,7 @@ public class Tutorial : MonoBehaviour
     private float m_EndEffectorRadius = 0.006f;
 
     [SerializeField]
-    private float m_WallStiffness = 45000f;
+    private float m_WallStiffness = 900f;
 
     [SerializeField]
     private Vector2 m_WallAdditionalForce = new Vector2(0f, 50000f);
@@ -210,6 +210,7 @@ public class Tutorial : MonoBehaviour
 
     ////////  Slingshot stuff ////////
     private float xDiff, yDiff;
+    private readonly System.Random m_rand = new System.Random();
 
     #region Setup
     private void Awake()
@@ -378,7 +379,7 @@ public class Tutorial : MonoBehaviour
                 Camera.main.orthographicSize = m_CameraDynamicSize;
             }
         }
-        if (Input.GetKeyDown(KeyCode.F) && (GameManager.GetState() == GameState.Released))
+        else if (Input.GetKeyDown(KeyCode.F) && (GameManager.GetState() == GameState.Released))
         {
             tutorialPrompt.text = "The orange bar shows the amount of fuel you have remaining. Failing to get to the destination " +
                                     "before the bar runs out will result in GAME OVER. Good luck!";
@@ -410,6 +411,12 @@ public class Tutorial : MonoBehaviour
                     "Next, press S to exit thrusters mode and recalibrate the end effector.";
                 m_TutorialStage = TutorialStage.AboutToEnterSlingshot2;
             }
+        }
+        else if(Input.GetKeyDown(KeyCode.R) && !m_Reloading)
+        {
+            // reset scene
+            m_Reloading = true;
+            StartCoroutine(Reload());
         }
     }
 
@@ -677,19 +684,26 @@ public class Tutorial : MonoBehaviour
                     else
                     {
                         m_WallPenetration = new Vector2(
-                            m_WallPosition.x - (m_EndEffectorPosition[0] + m_EndEffectorRadius),
+                            m_WallPosition.x - (m_EndEffectorPosition[0] + m_EndEffectorRadius) + .414f,
                             0f
                         );
-                        // Debug.Log(m_WallPenetration.x);
+                        //Debug.Log(m_WallPenetration.x);
                         if (m_WallPenetration.x < 0f)
                         {
                             m_WallForce += m_WallPenetration * -m_WallStiffness;
+                            Debug.Log(((-m_WorldSize.y / 2f - m_EndEffectorRadius - m_EndEffectorPosition[1]) + .24f) + " " + (m_SlingshotRope.midYpos - m_EndEffectorRadius - m_EndEffectorPosition[1] + .04f));
+                            m_WallForce[1] = (m_SlingshotRope.midYpos - m_EndEffectorRadius - m_EndEffectorPosition[1] + .04f) * -m_WallStiffness;
                         }
                     }
 
                     m_EndEffectorForce[0] = -m_WallForce[0];
                     m_EndEffectorForce[1] = -m_WallForce[1];
-                    // Debug.Log( $"m_EndEffectorForce.x: {m_EndEffectorForce[0]}, m_EndEffectorForce.y: {m_EndEffectorForce[1]}" );
+
+                    float timePassed = SlingshotTimer.secondsToRelease - SlingshotTimer.GetSlingshotTimeLeft();
+                    m_EndEffectorForce[0] -= timePassed * (float)m_rand.NextDouble() * 10f;
+                    m_EndEffectorForce[1] -= timePassed * (float)m_rand.NextDouble() * 10f;
+                    //Debug.Log(timePassed);
+                    Debug.Log($"m_EndEffectorForce.x: {m_EndEffectorForce[0]}, m_EndEffectorForce.y: {m_EndEffectorForce[1]}" );
                 }
                 else if (GameManager.GetState() == GameState.Released)
                 {
