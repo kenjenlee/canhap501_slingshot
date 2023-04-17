@@ -198,6 +198,7 @@ public class Slingshot : MonoBehaviour
     [SerializeField] private TextMeshProUGUI hapticFeedbackStatus;
     [SerializeField] private TextMeshProUGUI tetheredModeStatus;
     [SerializeField] private TextMeshProUGUI tetheredModeIndex;
+    [SerializeField] private TextMeshProUGUI alphaStatus;
     [SerializeField] private TextMeshProUGUI tutorialPrompt;
     private GameObject tutorialPromptParent;
 
@@ -355,6 +356,16 @@ public class Slingshot : MonoBehaviour
         {
             if (++cur_cel >= celestials.Length) cur_cel -= celestials.Length;
             tetheredModeIndex.text = "Tethered Planet (" + planet_vals[cur_cel].color + ")";
+        }
+        else if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            if (alpha + .05f < 1f) alpha += .05f;
+            alphaStatus.text = "Haptic Alpha: " + alpha.ToString("F2") + " \n0: Only thrusters \n1: Only gravity";
+        }
+        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            if (alpha - .05f > 0f) alpha -= .05f;
+            alphaStatus.text = "Haptic Alpha: " + alpha.ToString("F2") + " \n0: Only thrusters \n1: Only gravity";
         }
         else if (Input.GetKeyDown(KeyCode.R) && !m_Reloading)
         {
@@ -635,12 +646,8 @@ public class Slingshot : MonoBehaviour
                 }
                 else if (GameManager.GetState() == GameState.Released)
                 {
-
-                    /* TODO: Adjust Values of Gravity and thrustors*/
                     if (m_FiringThrusters)  {
                         // When thrusters are fired, only render the force caused by them
-                        //m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
-                        //m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
                          m_EndEffectorForce[0] += 20 * m_EndEffectorHorizontalThrustForce * (1 - alpha);
                         m_EndEffectorForce[1] += 20 * m_EndEffectorVerticalThrustForce * (1 - alpha);
 
@@ -660,12 +667,9 @@ public class Slingshot : MonoBehaviour
                         m_EndEffectorForce[0] = 0f;
                         m_EndEffectorForce[1] = 0f;
                     }
-                    m_EndEffectorForce[0] += ship_val.gravitational_forces.x*alpha;
-                    m_EndEffectorForce[1] += ship_val.gravitational_forces.y*alpha; 
-                    //else    {
-                    //    m_EndEffectorForce[0] = 0f;
-                    //    m_EndEffectorForce[1] = 0f;
-                    //}
+                    m_EndEffectorForce[0] += (float)1e11 * ship_val.gravitational_forces.x*alpha;
+                    m_EndEffectorForce[1] += (float)1e11 * ship_val.gravitational_forces.y*alpha; 
+                    
 
                     //Debug.Log("End effector (x, y): (" + m_EndEffectorPosition[0] + ", " + m_EndEffectorPosition[1] + ")"  
                 }
