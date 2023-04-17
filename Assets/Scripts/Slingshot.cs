@@ -353,12 +353,14 @@ public class Slingshot : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            if (--cur_cel <= 0) cur_cel += celestials.Length;
+            if (--cur_cel < 0) cur_cel += celestials.Length;
+            Debug.Log("Currently selected index: " + cur_cel);
             tetheredModeIndex.text = "Tethered Planet (" + planet_vals[cur_cel].color + ")";
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             if (++cur_cel >= celestials.Length) cur_cel -= celestials.Length;
+            Debug.Log("Currently selected index: " + cur_cel);
             tetheredModeIndex.text = "Tethered Planet (" + planet_vals[cur_cel].color + ")";
         }
         else if (Input.GetKeyDown(KeyCode.UpArrow))
@@ -599,13 +601,13 @@ public class Slingshot : MonoBehaviour
                     if (m_IsTethered){
                         // Using left and right arrows one can audition the planets
                         /* TODO: Adjust Values of Gravity*/
-                        m_EndEffectorForce[0] = 400 * planet_vals[cur_cel].grav.x;
-                        m_EndEffectorForce[1] = 400 * planet_vals[cur_cel].grav.y;
+                        m_EndEffectorForce[0] = 600 * planet_vals[cur_cel].grav.x;
+                        m_EndEffectorForce[1] = 600 * planet_vals[cur_cel].grav.y;
                     } else  {
                         m_EndEffectorForce[0] = (float) 1e11 * ship_val.gravitational_forces[0];
                         m_EndEffectorForce[1] = (float)1e11 * ship_val.gravitational_forces[1];
                     }
-                    Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
+                    //Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
 
                 }
                 else if (GameManager.GetState() == GameState.Slingshot)
