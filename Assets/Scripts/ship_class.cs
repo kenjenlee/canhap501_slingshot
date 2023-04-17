@@ -9,7 +9,7 @@ public class ship_class : MonoBehaviour
     public new Rigidbody2D rigidbody { get; private set; }
     public Vector2 gravitational_forces;
 	public float mass;
-    public int fuel = 10;
+    public float fuel = 100f;
 
     private void Awake()
     {
@@ -22,14 +22,14 @@ public class ship_class : MonoBehaviour
         }
         if (fuel<=0)
         {
-            Debug.Log("No Mo Fuel!");   
+            Debug.Log("No More Fuel!");   
         }
     }
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Asteroid"))
         {
-            --fuel;
+            fuel -= 1f;
         }
     }
 }

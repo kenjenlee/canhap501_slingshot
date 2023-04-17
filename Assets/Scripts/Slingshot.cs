@@ -181,7 +181,7 @@ public class Slingshot : MonoBehaviour
     private Slider fuelSlider;
 
     [SerializeField]
-    private float fuelBurnRate = 1.5f;
+    private float fuelBurnRate = .5f;
 
     private float currentFuel;
 
@@ -215,7 +215,6 @@ public class Slingshot : MonoBehaviour
         m_ConcurrentDataLock = new object();
         m_InitialArrowScale = m_EndEffectorArrowAvatar.transform.localScale;
         GameManager.OnGameStateChanged += OnGameStateChanged;
-        currentFuel = fuel;
         int LayerIgnoreAsteroid = LayerMask.NameToLayer("Ignore Asteroid");
         m_EndEffectorAvatar.gameObject.layer = LayerIgnoreAsteroid;
         m_EndEffectorStartAvatar.gameObject.layer = LayerIgnoreAsteroid;
@@ -227,7 +226,7 @@ public class Slingshot : MonoBehaviour
         celestials = GameObject.FindGameObjectsWithTag("Celestial");
         planet_vals = FindObjectsOfType<planet>();
         ship_val = FindObjectOfType<ship_class>();
-        fuel = 1;
+        currentFuel = fuel;
         Application.targetFrameRate = 60;
         
 
@@ -275,6 +274,7 @@ public class Slingshot : MonoBehaviour
         if (m_FiringThrusters)
         {
             currentFuel -= fuelBurnRate * Time.deltaTime;
+            ship_val.fuel = currentFuel;
             if (currentFuel < 0f)
             {
                 GameManager.UpdateGameState(GameState.GameLostFuelDrained);
