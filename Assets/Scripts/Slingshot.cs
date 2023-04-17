@@ -149,7 +149,7 @@ public class Slingshot : MonoBehaviour
     private GameObject m_Destination;
 
     [SerializeField]
-    private bool m_IsTethered;
+    private bool m_IsTethered = false;
     private float m_EarthDistance = 0.0f;
     private Vector2 m_EarthForce = new Vector2(0f, 0f);
     private Vector2 m_EffectorPosition = new Vector2(0f, 0f);
@@ -196,6 +196,7 @@ public class Slingshot : MonoBehaviour
     [SerializeField] private TextMeshProUGUI thrustersStatus;
     [SerializeField] private TextMeshProUGUI hapticFeedbackStatus;
     [SerializeField] private TextMeshProUGUI tetheredModeStatus;
+    [SerializeField] private TextMeshProUGUI tetheredModeIndex;
     [SerializeField] private TextMeshProUGUI tutorialPrompt;
     private GameObject tutorialPromptParent;
 
@@ -257,6 +258,11 @@ public class Slingshot : MonoBehaviour
 
         tutorialPromptParent = tutorialPrompt.gameObject.transform.parent.gameObject;
         tutorialPromptParent.SetActive(false);
+
+        hapticFeedbackStatus.text = m_HapticsOn ? "Haptic Feedback (Enabled)" : "Haptic Feedback (Disabled)";
+        tetheredModeStatus.text = m_IsTethered ? "Tethered Mode (Enabled)" : "Tethered Mode (Disabled)";
+        thrustersStatus.text = "Thrusters (Disabled)";
+        tetheredModeIndex.text = "Tethered Planet (" + planet_vals[cur_cel].color + ")";
     }
 
     private void FixedUpdate()
@@ -336,10 +342,12 @@ public class Slingshot : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             if (--cur_cel <= 0) cur_cel += celestials.Length;
+            tetheredModeIndex.text = "Tethered Planet (" + planet_vals[cur_cel].color + ")";
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             if (++cur_cel >= celestials.Length) cur_cel -= celestials.Length;
+            tetheredModeIndex.text = "Tethered Planet (" + planet_vals[cur_cel].color + ")";
         }
         else if (Input.GetKeyDown(KeyCode.R) && !m_Reloading)
         {
@@ -569,10 +577,10 @@ public class Slingshot : MonoBehaviour
                         m_EndEffectorForce[0] = 400 * planet_vals[cur_cel].grav.x;
                         m_EndEffectorForce[1] = 400 * planet_vals[cur_cel].grav.y;
                     } else  {
-                        m_EndEffectorForce[0] = 10000 * ship_val.gravitational_forces[0];
-                        m_EndEffectorForce[1] = 10000 * ship_val.gravitational_forces[1];
+                        m_EndEffectorForce[0] = (float) 1e11 * ship_val.gravitational_forces[0];
+                        m_EndEffectorForce[1] = (float)1e11 * ship_val.gravitational_forces[1];
                     }
-                    //Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
+                    Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
 
                 }
                 else if (GameManager.GetState() == GameState.Slingshot)
