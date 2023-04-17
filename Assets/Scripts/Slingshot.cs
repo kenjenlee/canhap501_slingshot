@@ -197,6 +197,7 @@ public class Slingshot : MonoBehaviour
     [SerializeField] private TextMeshProUGUI hapticFeedbackStatus;
     [SerializeField] private TextMeshProUGUI tetheredModeStatus;
     [SerializeField] private TextMeshProUGUI tutorialPrompt;
+    private GameObject tutorialPromptParent;
 
     ////////  Scene reloading ////////
     private bool m_Reloading = false;
@@ -253,6 +254,9 @@ public class Slingshot : MonoBehaviour
         m_SimulationLoopTask.Start();
 
         StartCoroutine(StepCountTimer());
+
+        tutorialPromptParent = tutorialPrompt.gameObject.transform.parent.gameObject;
+        tutorialPromptParent.SetActive(false);
     }
 
     private void FixedUpdate()
@@ -276,6 +280,19 @@ public class Slingshot : MonoBehaviour
 
     private void Update()
     {
+        if (GameManager.GameLost())
+        {
+            if (Input.GetMouseButtonDown(0) && !m_Reloading)
+            {
+                m_Reloading = true;
+                tutorialPromptParent.SetActive(true);
+                tutorialPrompt.text = "Reloading scene... Please don't move or provide any input.";
+                Debug.Log("Calling reload");
+                StartCoroutine(Reload());
+            }
+            return;
+        }
+
         fuelSlider.value = currentFuel / fuel;
 
         if (Input.GetKeyDown(KeyCode.H))
@@ -328,6 +345,9 @@ public class Slingshot : MonoBehaviour
         {
             // reset scene
             m_Reloading = true;
+            tutorialPromptParent.SetActive(true);
+            tutorialPrompt.text = "Reloading scene... Please don't move or provide any input.";
+            Debug.Log("Calling reload");
             StartCoroutine(Reload());
         }
     }
@@ -455,17 +475,19 @@ public class Slingshot : MonoBehaviour
         }
         else if (s == GameState.GameWon)
         {
-            tutorialPrompt.text = "Great job! Now you've learned the basics of Slingshot, and are ready to play more challenging levels! " +
-                "Click anywhere to progress to the next level.";
+            tutorialPromptParent.SetActive(true);
+            tutorialPrompt.text = "Great job! You won the level, congragulations!";
         }
         else if (s == GameState.GameLostBoundsExceeded)
         {
             Debug.Log($"Game Over!");
+            tutorialPromptParent.SetActive(true);
             tutorialPrompt.text = "You lost due to exceeding the bounds of the level :( Please reset the end effector and click to restart the tutorial!";
         }
         else if (s == GameState.GameLostFuelDrained)
         {
             Debug.Log($"Game Over!");
+            tutorialPromptParent.SetActive(true);
             tutorialPrompt.text = "You lost due to having no fuel left :( Please reset the end effector and click to restart the tutorial!";
         }
 
@@ -661,11 +683,10 @@ public class Slingshot : MonoBehaviour
     /// </summary>
     private void OnDestroy()
     {
-        lock (m_ConcurrentDataLock)
-        {
-            m_WidgetOne.SetDeviceTorques(new float[2] { 0f, 0f }, m_Torques);
-            m_WidgetOne.DeviceWriteTorques();
-        }
+        RemoveHapticFeedback();
+        // Have to unsubscribe, otherwise there will be issues with reloading scene.
+        // https://forum.unity.com/threads/missingreferenceexception-when-scene-is-reloaded.533658/
+        GameManager.OnGameStateChanged -= OnGameStateChanged;
     }
     #endregion
 
