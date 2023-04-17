@@ -604,7 +604,7 @@ public class Slingshot : MonoBehaviour
                         m_EndEffectorForce[0] = 600 * planet_vals[cur_cel].grav.x;
                         m_EndEffectorForce[1] = 600 * planet_vals[cur_cel].grav.y;
                     } else  {
-                        m_EndEffectorForce[0] = (float) 1e11 * ship_val.gravitational_forces[0];
+                        m_EndEffectorForce[0] = (float)1e11 * ship_val.gravitational_forces[0];
                         m_EndEffectorForce[1] = (float)1e11 * ship_val.gravitational_forces[1];
                     }
                     //Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
@@ -672,6 +672,8 @@ public class Slingshot : MonoBehaviour
                     else    {
                         m_EndEffectorForce[0] = 0f;
                         m_EndEffectorForce[1] = 0f;
+                        //m_EndEffectorForce[0] = (float)1e9 * ship_val.gravitational_forces[0];
+                        //m_EndEffectorForce[1] = (float)1e9 * ship_val.gravitational_forces[1];
                     }
                     m_EndEffectorForce[0] += (float)1e11 * ship_val.gravitational_forces.x*alpha;
                     m_EndEffectorForce[1] += (float)1e11 * ship_val.gravitational_forces.y*alpha; 
