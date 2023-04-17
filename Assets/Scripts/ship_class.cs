@@ -17,7 +17,9 @@ public class ship_class : MonoBehaviour
     }
     private void Update()
     {
-
+        if (GameManager.GetState() == GameState.Released)   {
+            GetComponent<Rigidbody2D>().AddForce(new Vector2 (8e8f * gravitational_forces[0], 8e8f * gravitational_forces[1]));
+        }
         if (fuel<=0)
         {
             Debug.Log("No Mo Fuel!");   
