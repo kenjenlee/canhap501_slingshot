@@ -116,6 +116,7 @@ public class Slingshot : MonoBehaviour
 
     private Vector2 m_ReleasedForce = new Vector2(0f, 0f);
     private bool m_JustReleased = false;
+    private bool m_JustWonLost = false;
     private bool m_DecoupleEndEffectorFromAvatar = false;
     private bool m_FiringThrusters = false;
     private bool m_HapticsOn = true;
@@ -281,6 +282,13 @@ public class Slingshot : MonoBehaviour
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().angularVelocity = 0f;
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2(300f * xDiff, 300f * yDiff));
             m_JustReleased = false;
+        }
+
+        if (m_JustWonLost)
+        {
+            m_JustWonLost = false;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().angularVelocity = 0f;
         }
     }
 
@@ -485,18 +493,21 @@ public class Slingshot : MonoBehaviour
         {
             tutorialPromptParent.SetActive(true);
             tutorialPrompt.text = "Great job! You won the level, congragulations!";
+            m_JustWonLost = true;
         }
         else if (s == GameState.GameLostBoundsExceeded)
         {
             Debug.Log($"Game Over!");
             tutorialPromptParent.SetActive(true);
             tutorialPrompt.text = "You lost due to exceeding the bounds of the level :( Please reset the end effector and click to restart the tutorial!";
+            m_JustWonLost = true;
         }
         else if (s == GameState.GameLostFuelDrained)
         {
             Debug.Log($"Game Over!");
             tutorialPromptParent.SetActive(true);
             tutorialPrompt.text = "You lost due to having no fuel left :( Please reset the end effector and click to restart the tutorial!";
+            m_JustWonLost = true;
         }
 
         if (GameManager.GameEnded())

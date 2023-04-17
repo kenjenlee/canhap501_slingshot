@@ -40,6 +40,7 @@ public class Tutorial : MonoBehaviour
     }
 
     private TutorialStage m_TutorialStage;
+    private bool m_JustWonLost = false;
 
     public const int CW = 0;
     public const int CCW = 1;
@@ -302,6 +303,13 @@ public class Tutorial : MonoBehaviour
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().angularVelocity = 0f;
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2(300f * xDiff, 300f * yDiff));
+        }
+
+        if(m_JustWonLost)
+        {
+            m_JustWonLost = false;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().angularVelocity = 0f;
         }
     }
 
@@ -567,16 +575,19 @@ public class Tutorial : MonoBehaviour
         {
             tutorialPrompt.text = "Great job! Now you've learned the basics of Slingshot, and are ready to play more challenging levels! " +
                 "Click anywhere to progress to the next level.";
+            m_JustWonLost = true;
         }
         else if (s == GameState.GameLostBoundsExceeded)
         {
             Debug.Log($"Game Over!");
             tutorialPrompt.text = "You lost due to exceeding the bounds of the level :( Please reset the end effector and click to restart the tutorial!";
+            m_JustWonLost = true;
         }
         else if (s == GameState.GameLostFuelDrained)
         {
             Debug.Log($"Game Over!");
             tutorialPrompt.text = "You lost due to having no fuel left :( Please reset the end effector and click to restart the tutorial!";
+            m_JustWonLost = true;
         }
 
         if(GameManager.GameEnded())
@@ -707,43 +718,30 @@ public class Tutorial : MonoBehaviour
                 }
                 else if (GameManager.GetState() == GameState.Released)
                 {
-                    // commented out
-                    //if (m_TutorialStage == TutorialStage.JustReleased)
-                    //{
-                    //    // m_ReleasedForce[0] = m_EndEffectorForce[0];
-                    //    // m_ReleasedForce[1] = m_EndEffectorForce[1];
-                    //    // m_EndEffectorForce[0] = m_ReleasedForce[0];
-                    //    // m_EndEffectorForce[1] = m_ReleasedForce[1];
-                    //    // Commented out
-                    //    //m_EndEffectorForce[0] = 0f;
-                    //    //m_EndEffectorForce[1] = 0f;
-                    //}
+                    if (m_FiringThrusters)
+                    {
 
-                    //if (m_FiringThrusters)
-                    //{
+                        // When thrusters are fired, only render the force caused by them
+                        m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
+                        m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
 
-                    //    // When thrusters are fired, only render the force caused by them
-                    //    m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
-                    //    m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
+                        if (currentFuel / fuel < 0.1f)
+                        {
+                            m_EndEffectorHorizontalThrustForce *= 0.5f * currentFuel / fuel;
+                            m_EndEffectorVerticalThrustForce *= 0.5f * currentFuel / fuel;
+                        }
+                        else
+                        {
+                            m_EndEffectorHorizontalThrustForce *= 0.99f;
+                            m_EndEffectorVerticalThrustForce *= 0.99f;
+                        }
 
-                    //    if (currentFuel / fuel < 0.1f)
-                    //    {
-                    //        m_EndEffectorHorizontalThrustForce *= 0.5f * currentFuel / fuel;
-                    //        m_EndEffectorVerticalThrustForce *= 0.5f * currentFuel / fuel;
-                    //    }
-                    //    else
-                    //    {
-                    //        m_EndEffectorHorizontalThrustForce *= 0.99f;
-                    //        m_EndEffectorVerticalThrustForce *= 0.99f;
-                    //    }
-
-                    //}
-                    //else
-                    //{
-                    //    // Commented out
-                    //    //m_EndEffectorForce[0] = 0f;
-                    //    //m_EndEffectorForce[1] = 0f;
-                    //}
+                    }
+                    else
+                    {
+                        m_EndEffectorForce[0] = 0f;
+                        m_EndEffectorForce[1] = 0f;
+                    }
 
                     ////Debug.Log("End effector (x, y): (" + m_EndEffectorPosition[0] + ", " + m_EndEffectorPosition[1] + ")");
                 }
