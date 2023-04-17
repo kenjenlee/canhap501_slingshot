@@ -319,6 +319,8 @@ MonoBehaviour:
   m_Pantograph: {fileID: 1339637032}
   m_Background: {fileID: 1507388472}
   m_EndEffectorAvatar: {fileID: 1853009196}
+  ship_val_start: {fileID: 1865612530}
+  ship_val: {fileID: 1371053945}
   m_EndEffectorStartAvatar: {fileID: 283590372}
   m_MapAbsBound: {x: 1, y: 0.61}
   m_WallAvatar: {fileID: 1594177289}
@@ -675,7 +677,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 55, y: -117.9}
+  m_AnchoredPosition: {x: 55, y: -117.8999}
   m_SizeDelta: {x: 800, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &107274773
@@ -4353,7 +4355,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 55, y: -117.9}
+  m_AnchoredPosition: {x: 55, y: -117.8999}
   m_SizeDelta: {x: 800, y: 415.85132}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1894938268
