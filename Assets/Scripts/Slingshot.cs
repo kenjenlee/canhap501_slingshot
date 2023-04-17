@@ -98,6 +98,7 @@ public class Slingshot : MonoBehaviour
 
     private float[] m_EndEffectorPosition;
     private float[] m_EndEffectorForce;
+    private float[] m_EndEffectorForceZERO;
     private float m_EndEffectorHorizontalThrustForce = 0f;
     private float m_EndEffectorVerticalThrustForce = 0f;
 
@@ -248,6 +249,9 @@ public class Slingshot : MonoBehaviour
 
         m_EndEffectorPosition = new float[2];
         m_EndEffectorForce = new float[2];
+        m_EndEffectorForceZERO = new float[2];
+        m_EndEffectorForceZERO[0] = 0f;
+        m_EndEffectorForceZERO[1] = 0f;
 
         m_RenderingForce = false;
 
@@ -685,6 +689,10 @@ public class Slingshot : MonoBehaviour
             if (m_HapticsOn)
             {
                 m_WidgetOne.SetDeviceTorques(m_EndEffectorForce, m_Torques);
+            }
+            else
+            {
+                m_WidgetOne.SetDeviceTorques(m_EndEffectorForceZERO, m_Torques);
             }
             m_WidgetOne.DeviceWriteTorques();
 
