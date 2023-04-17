@@ -703,7 +703,7 @@ public class Tutorial : MonoBehaviour
                     m_EndEffectorForce[0] -= timePassed * (float)m_rand.NextDouble() * 10f;
                     m_EndEffectorForce[1] -= timePassed * (float)m_rand.NextDouble() * 10f;
                     //Debug.Log(timePassed);
-                    Debug.Log($"m_EndEffectorForce.x: {m_EndEffectorForce[0]}, m_EndEffectorForce.y: {m_EndEffectorForce[1]}" );
+                    //Debug.Log($"m_EndEffectorForce.x: {m_EndEffectorForce[0]}, m_EndEffectorForce.y: {m_EndEffectorForce[1]}" );
                 }
                 else if (GameManager.GetState() == GameState.Released)
                 {
@@ -947,6 +947,13 @@ public class Tutorial : MonoBehaviour
                 m_EndEffectorVerticalThrustForce = m_thrusterStiffness * (position.y - m_anchorPointY);
 
             }
+            else
+            {
+                EngineFire_Down.SetActive(false);
+                EngineFire_Up.SetActive(false);
+                EngineFire_Left.SetActive(false);
+                EngineFire_Right.SetActive(false);
+            }
 
             //if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.005)
             if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.02)
@@ -957,13 +964,7 @@ public class Tutorial : MonoBehaviour
 
 
         }
-        else if (!m_FiringThrusters)
-        {
-            EngineFire_Down.SetActive(false);
-            EngineFire_Up.SetActive(false);
-            EngineFire_Left.SetActive(false);
-            EngineFire_Right.SetActive(false);
-        }
+        
         LastPos_x = position.x;
         LastPos_y = position.y;
 
