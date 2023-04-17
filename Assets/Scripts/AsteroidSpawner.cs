@@ -21,6 +21,10 @@ public class AsteroidSpawner : MonoBehaviour
 
     public void Spawn()
     {
+        // don't have more than 10 asteroids in scene at any one time
+        GameObject[] tmp =  GameObject.FindGameObjectsWithTag("Asteroid");
+        if (tmp.Length > 10) return;
+
         for (int i = 0; i < amountPerSpawn; i++)
         {
             // Choose a random direction from the center of the spawner and

@@ -18,7 +18,7 @@ public class Asteroid : MonoBehaviour
     public float maxSize = 1.65f;
     public float mass; 
     public float movementSpeed = 50f;
-    public float maxLifetime = 30f;
+    public float maxLifetime = 5f;
 
     private void Awake()
     {
