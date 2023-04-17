@@ -133,7 +133,7 @@ public class Slingshot : MonoBehaviour
     planet[] planet_vals;
     int cur_cel;
     Vector2[] planet_vel;
-    float alpha;
+    float alpha = .01f;
     //int fuel;
 
     [SerializeField]
@@ -225,7 +225,6 @@ public class Slingshot : MonoBehaviour
         celestials = GameObject.FindGameObjectsWithTag("Celestial");
         planet_vals = FindObjectsOfType<planet>();
         ship_val = FindObjectOfType<ship_class>();
-        alpha = 0.5f;
         fuel = 1;
         Application.targetFrameRate = 60;
         
@@ -636,32 +635,25 @@ public class Slingshot : MonoBehaviour
                 }
                 else if (GameManager.GetState() == GameState.Released)
                 {
-                    m_EndEffectorForce[0] = 0f;
-                    m_EndEffectorForce[1] = 0f;
-                    //Not needed and is it really how a slingshot works?
-                    //should the ship not feel the force slowly dissipase at it is being released by the sling shot?
-
-                    //if (m_JustReleased)
-                    //{
-                    //    //m_JustReleased = false;
-                    //    // m_ReleasedForce[0] = m_EndEffectorForce[0];
-                    //    // m_ReleasedForce[1] = m_EndEffectorForce[1];
-                    //    // m_EndEffectorForce[0] = m_ReleasedForce[0];
-                    //    // m_EndEffectorForce[1] = m_ReleasedForce[1];
-                    //    m_EndEffectorForce[0] = 0f;
-                    //    m_EndEffectorForce[1] = 0f;
-                    //}
 
                     /* TODO: Adjust Values of Gravity and thrustors*/
                     if (m_FiringThrusters)  {
                         // When thrusters are fired, only render the force caused by them
-                        m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
-                        m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
-                        // m_EndEffectorForce[0] += 20 * m_EndEffectorHorizontalThrustForce*(1-alpha);
-                        // m_EndEffectorForce[1] += 20 * m_EndEffectorVerticalThrustForce*(1-alpha);
+                        //m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
+                        //m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
+                         m_EndEffectorForce[0] += 20 * m_EndEffectorHorizontalThrustForce * (1 - alpha);
+                        m_EndEffectorForce[1] += 20 * m_EndEffectorVerticalThrustForce * (1 - alpha);
 
-                        m_EndEffectorHorizontalThrustForce *= 0.99f;
-                        m_EndEffectorVerticalThrustForce *= 0.99f;
+                        if (currentFuel / fuel < 0.1f)
+                        {
+                            m_EndEffectorHorizontalThrustForce *= 0.5f * currentFuel / fuel;
+                            m_EndEffectorVerticalThrustForce *= 0.5f * currentFuel / fuel;
+                        }
+                        else
+                        {
+                            m_EndEffectorHorizontalThrustForce *= 0.99f;
+                            m_EndEffectorVerticalThrustForce *= 0.99f;
+                        }
 
                     }
                     else    {
