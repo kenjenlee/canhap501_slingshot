@@ -138,7 +138,7 @@ public class Slingshot : MonoBehaviour
     planet[] planet_vals;
     int cur_cel;
     Vector2[] planet_vel;
-    float alpha = .01f;
+    public float alpha = .01f;
     //int fuel;
 
     [SerializeField]
@@ -300,6 +300,13 @@ public class Slingshot : MonoBehaviour
         }
     }
 
+    // Adjusts the value of alpha
+    public void AdjustAplha(float newAlpha)
+    {
+        alpha = newAlpha;
+        alphaStatus.text = "Haptic Alpha: " + alpha.ToString("F2") + " \n0: Only thrusters \n1: Only gravity";
+    }
+
     private void Update()
     {
         if (GameManager.GameLost())
@@ -367,16 +374,16 @@ public class Slingshot : MonoBehaviour
             Debug.Log("Currently selected index: " + cur_cel);
             tetheredModeIndex.text = "Tethered Planet (" + planet_vals[cur_cel].color + ")";
         }
-        else if (Input.GetKeyDown(KeyCode.UpArrow))
-        {
-            if (alpha + .05f < 1f) alpha += .05f;
-            alphaStatus.text = "Haptic Alpha: " + alpha.ToString("F2") + " \n0: Only thrusters \n1: Only gravity";
-        }
-        else if (Input.GetKeyDown(KeyCode.DownArrow))
-        {
-            if (alpha - .05f > 0f) alpha -= .05f;
-            alphaStatus.text = "Haptic Alpha: " + alpha.ToString("F2") + " \n0: Only thrusters \n1: Only gravity";
-        }
+        //else if (Input.GetKeyDown(KeyCode.UpArrow))
+        //{
+        //    if (alpha + .05f < 1f) alpha += .05f;
+        //    alphaStatus.text = "Haptic Alpha: " + alpha.ToString("F2") + " \n0: Only thrusters \n1: Only gravity";
+        //}
+        //else if (Input.GetKeyDown(KeyCode.DownArrow))
+        //{
+        //    if (alpha - .05f > 0f) alpha -= .05f;
+        //    alphaStatus.text = "Haptic Alpha: " + alpha.ToString("F2") + " \n0: Only thrusters \n1: Only gravity";
+        //}
         else if (Input.GetKeyDown(KeyCode.R) && !m_Reloading)
         {
             // reset scene
