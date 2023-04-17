@@ -29,8 +29,8 @@ public class gravity_sim : MonoBehaviour
 
     private Task g_SimulationLoopTask;
 
-    GameObject avatar_obj;
-    ship_class ship_val;
+    GameObject[] avatar_obj;
+    ship_class[] ship_val;
     private Vector2 ship_force;
 
     GameObject[] celestials;
@@ -39,12 +39,16 @@ public class gravity_sim : MonoBehaviour
     {
         celestials = GameObject.FindGameObjectsWithTag("Celestial");
         planet_vals = FindObjectsOfType<planet> ();
-        avatar_obj = GameObject.FindGameObjectWithTag("EndEffectorAvatar");
-        ship_val = FindObjectOfType<ship_class>();
+        avatar_obj = GameObject.FindGameObjectsWithTag("EndEffectorAvatar");
+        ship_val = FindObjectsOfType<ship_class>();
         int size = celestials.Length;
         Time.fixedDeltaTime = physicsTimeStep;
         Debug.Log("Setting fixedDeltaTime to: " + gravitationalConstant);
-        ship_val.mass = 200f;
+        foreach(ship_class ship in ship_val)
+        {
+            ship.mass = 200f;
+        }
+        
         SetInitialVelocity();
     }
 
@@ -77,12 +81,17 @@ public class gravity_sim : MonoBehaviour
 
         }
         ship_force = Vector2.zero;
-        foreach (GameObject sub_planet in celestials)
+        for (int i = 0; i < avatar_obj.Length; i++)
         {
-            float r = Vector2.Distance(avatar_obj.transform.position, sub_planet.transform.position);
-            ship_force += (Vector2)(sub_planet.transform.position - avatar_obj.transform.position).normalized * gravitationalConstant * sub_mass / (r * r);
+            foreach (GameObject sub_planet in celestials)
+            {
+                float r = Vector2.Distance(sub_planet.transform.position, avatar_obj[i].transform.position);
+                ship_force += (Vector2)(avatar_obj[i].transform.position - sub_planet.transform.position).normalized * gravitationalConstant * sub_mass / (r * r);
+            }
+            ship_val[i].gravitational_forces = ship_val[i].mass * ship_force;
+            
         }
-        ship_val.gravitational_forces = ship_val.mass * ship_force;
+        
     }
     private void SetInitialVelocity()
     {

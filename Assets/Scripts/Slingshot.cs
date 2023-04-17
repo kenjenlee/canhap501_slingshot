@@ -44,6 +44,9 @@ public class Slingshot : MonoBehaviour
     [SerializeField]
     private SpriteRenderer m_EndEffectorAvatar;
 
+    [SerializeField]
+    private ship_class ship_val_start;
+    [SerializeField]
     private ship_class ship_val;
 
     [SerializeField]
@@ -103,6 +106,7 @@ public class Slingshot : MonoBehaviour
     private float m_EndEffectorVerticalThrustForce = 0f;
 
     private bool m_RenderingForce;
+    float[] saturated_m_EndEffectorForce;
 
     private int m_Steps;
     private int m_Frames;
@@ -225,7 +229,7 @@ public class Slingshot : MonoBehaviour
         Debug.Log($"Screen.width: {Screen.width}");
         celestials = GameObject.FindGameObjectsWithTag("Celestial");
         planet_vals = FindObjectsOfType<planet>();
-        ship_val = FindObjectOfType<ship_class>();
+        
         currentFuel = fuel;
         Application.targetFrameRate = 60;
         
@@ -530,6 +534,8 @@ public class Slingshot : MonoBehaviour
         {
             RemoveHapticFeedback();
         }
+        Debug.Log($"Gamestate: {s}");
+
     }
 
     #region Drawing
@@ -598,16 +604,17 @@ public class Slingshot : MonoBehaviour
                 // Debug.Log( $"m_WallPosition.y: {m_WallPosition.y}, m_EndEffectorPosition[1] + m_EndEffectorRadius: {m_EndEffectorPosition[1] + m_EndEffectorRadius}" );
                 if (GameManager.GetState() == GameState.Freemovement)
                 {
+
                     if (m_IsTethered){
                         // Using left and right arrows one can audition the planets
                         /* TODO: Adjust Values of Gravity*/
                         m_EndEffectorForce[0] = 600 * planet_vals[cur_cel].grav.x;
                         m_EndEffectorForce[1] = 600 * planet_vals[cur_cel].grav.y;
                     } else  {
-                        m_EndEffectorForce[0] = (float)1e11 * ship_val.gravitational_forces[0];
-                        m_EndEffectorForce[1] = (float)1e11 * ship_val.gravitational_forces[1];
+                        m_EndEffectorForce[0] = (float)1e11 * ship_val_start.gravitational_forces[0];
+                        m_EndEffectorForce[1] = (float)1e11 * ship_val_start.gravitational_forces[1];
                     }
-                    //Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
+                    
 
                 }
                 else if (GameManager.GetState() == GameState.Slingshot)
@@ -692,7 +699,9 @@ public class Slingshot : MonoBehaviour
 
             if (m_HapticsOn)
             {
-                m_WidgetOne.SetDeviceTorques(m_EndEffectorForce, m_Torques);
+                saturated_m_EndEffectorForce = forceSaturation(m_EndEffectorForce, 1000f);
+                //Debug.Log(saturated_m_EndEffectorForce[0] + " " + saturated_m_EndEffectorForce[1]);
+                m_WidgetOne.SetDeviceTorques(saturated_m_EndEffectorForce, m_Torques);
             }
             else
             {
@@ -877,7 +886,18 @@ public class Slingshot : MonoBehaviour
         Resources.UnloadUnusedAssets();
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex, LoadSceneMode.Single);
     }
-
+    private float[] forceSaturation(float[] effector_force, float max_value)
+    {
+        if (Mathf.Abs(effector_force[0]) > max_value)
+        {
+            effector_force[0] = Mathf.Sign(effector_force[0]) * max_value;
+        }
+        if (Mathf.Abs(effector_force[1]) > max_value)
+        {
+            effector_force[1] = Mathf.Sign(effector_force[1]) * max_value;
+        }
+        return effector_force;
+    }
     private void RemoveHapticFeedback()
     {
         lock (m_ConcurrentDataLock)

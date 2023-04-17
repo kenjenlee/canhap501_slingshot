@@ -30,6 +30,7 @@ public class ship_class : MonoBehaviour
         if (collision.gameObject.CompareTag("Asteroid"))
         {
             fuel -= 1f;
+            Debug.Log("Collision with Asteroid!!!!");
         }
     }
 }
