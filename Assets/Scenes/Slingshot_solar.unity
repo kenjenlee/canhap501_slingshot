@@ -775,6 +775,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1603731453216286529, guid: ccc9112fd0b1d45f593aae5f9df35463, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -59.19995
+      objectReference: {fileID: 0}
     - target: {fileID: 1603731454416317225, guid: ccc9112fd0b1d45f593aae5f9df35463, type: 3}
       propertyPath: m_Name
       value: UI
@@ -1845,7 +1849,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 793148749041878596, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_MacComPort
-      value: /dev/cu.usbmodem1101
+      value: /dev/cu.usbmodem144301
       objectReference: {fileID: 0}
     - target: {fileID: 793148749041878596, guid: 6c6bd26742403d2488568c08e934d62b, type: 3}
       propertyPath: m_WindowsComPort
