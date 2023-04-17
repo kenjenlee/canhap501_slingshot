@@ -7,6 +7,7 @@ using UnityEngine;
 using Haply.hAPI;
 using Haply.hAPI.Samples;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 
 using TimeSpan = System.TimeSpan;
@@ -51,6 +52,9 @@ public class Slingshot : MonoBehaviour
     private SpriteRenderer m_CurrentEndEffectorAvatar;
 
     [SerializeField]
+    private Vector2 m_MapAbsBound = new Vector2(1f, .61f);
+
+    [SerializeField]
     private SpriteRenderer m_WallAvatar;
 
     [SerializeField]
@@ -67,7 +71,7 @@ public class Slingshot : MonoBehaviour
     private float m_EndEffectorRadius = 0.006f;
 
     [SerializeField]
-    private float m_WallStiffness = 45f;
+    private float m_WallStiffness = 900f;
 
     [SerializeField]
     private Vector2 m_WallAdditionalForce = new Vector2(0f, 50000f);
@@ -94,6 +98,7 @@ public class Slingshot : MonoBehaviour
 
     private float[] m_EndEffectorPosition;
     private float[] m_EndEffectorForce;
+    private float[] m_EndEffectorForceZERO;
     private float m_EndEffectorHorizontalThrustForce = 0f;
     private float m_EndEffectorVerticalThrustForce = 0f;
 
@@ -111,7 +116,8 @@ public class Slingshot : MonoBehaviour
     private Vector3 m_InitialArrowScale;
 
     private Vector2 m_ReleasedForce = new Vector2(0f, 0f);
-    private bool m_JustReleased = true;
+    private bool m_JustReleased = false;
+    private bool m_JustWonLost = false;
     private bool m_DecoupleEndEffectorFromAvatar = false;
     private bool m_FiringThrusters = false;
     private bool m_HapticsOn = true;
@@ -128,7 +134,7 @@ public class Slingshot : MonoBehaviour
     planet[] planet_vals;
     int cur_cel;
     Vector2[] planet_vel;
-    float alpha;
+    float alpha = .01f;
     //int fuel;
 
     [SerializeField]
@@ -145,7 +151,7 @@ public class Slingshot : MonoBehaviour
     private GameObject m_Destination;
 
     [SerializeField]
-    private bool m_IsTethered;
+    private bool m_IsTethered = false;
     private float m_EarthDistance = 0.0f;
     private Vector2 m_EarthForce = new Vector2(0f, 0f);
     private Vector2 m_EffectorPosition = new Vector2(0f, 0f);
@@ -191,6 +197,17 @@ public class Slingshot : MonoBehaviour
     ////////  HUD  ////////
     [SerializeField] private TextMeshProUGUI thrustersStatus;
     [SerializeField] private TextMeshProUGUI hapticFeedbackStatus;
+    [SerializeField] private TextMeshProUGUI tetheredModeStatus;
+    [SerializeField] private TextMeshProUGUI tetheredModeIndex;
+    [SerializeField] private TextMeshProUGUI alphaStatus;
+    [SerializeField] private TextMeshProUGUI tutorialPrompt;
+    private GameObject tutorialPromptParent;
+
+    ////////  Scene reloading ////////
+    private bool m_Reloading = false;
+
+    ////////  Slingshot stuff ////////
+    private float xDiff, yDiff;
 
     #region Setup
     private void Awake()
@@ -210,7 +227,6 @@ public class Slingshot : MonoBehaviour
         celestials = GameObject.FindGameObjectsWithTag("Celestial");
         planet_vals = FindObjectsOfType<planet>();
         ship_val = FindObjectOfType<ship_class>();
-        alpha = 0.5f;
         fuel = 1;
         Application.targetFrameRate = 60;
         
@@ -233,6 +249,9 @@ public class Slingshot : MonoBehaviour
 
         m_EndEffectorPosition = new float[2];
         m_EndEffectorForce = new float[2];
+        m_EndEffectorForceZERO = new float[2];
+        m_EndEffectorForceZERO[0] = 0f;
+        m_EndEffectorForceZERO[1] = 0f;
 
         m_RenderingForce = false;
 
@@ -241,6 +260,14 @@ public class Slingshot : MonoBehaviour
         m_SimulationLoopTask.Start();
 
         StartCoroutine(StepCountTimer());
+
+        tutorialPromptParent = tutorialPrompt.gameObject.transform.parent.gameObject;
+        tutorialPromptParent.SetActive(false);
+
+        hapticFeedbackStatus.text = m_HapticsOn ? "Haptic Feedback (Enabled)" : "Haptic Feedback (Disabled)";
+        tetheredModeStatus.text = m_IsTethered ? "Tethered Mode (Enabled)" : "Tethered Mode (Disabled)";
+        thrustersStatus.text = "Thrusters (Disabled)";
+        tetheredModeIndex.text = "Tethered Planet (" + planet_vals[cur_cel].color + ")";
     }
 
     private void FixedUpdate()
@@ -248,20 +275,53 @@ public class Slingshot : MonoBehaviour
         if (m_FiringThrusters)
         {
             currentFuel -= fuelBurnRate * Time.deltaTime;
+            if (currentFuel < 0f)
+            {
+                GameManager.UpdateGameState(GameState.GameLostFuelDrained);
+            }
+        }
+        if(m_JustReleased)
+        {
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().angularVelocity = 0f;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(new Vector2(300f * xDiff, 300f * yDiff));
+            m_JustReleased = false;
+        }
+
+        if (m_JustWonLost)
+        {
+            m_JustWonLost = false;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+            m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().angularVelocity = 0f;
         }
     }
 
     private void Update()
     {
+        if (GameManager.GameLost())
+        {
+            if (Input.GetMouseButtonDown(0) && !m_Reloading)
+            {
+                m_Reloading = true;
+                tutorialPromptParent.SetActive(true);
+                tutorialPrompt.text = "Reloading scene... Please don't move or provide any input.";
+                Debug.Log("Calling reload");
+                StartCoroutine(Reload());
+            }
+            return;
+        }
+
         fuelSlider.value = currentFuel / fuel;
 
         if (Input.GetKeyDown(KeyCode.H))
         {
             m_HapticsOn = !m_HapticsOn;
+            hapticFeedbackStatus.text = m_HapticsOn ? "Haptic Feedback (Enabled)" : "Haptic Feedback (Disabled)";
         }
         else if (Input.GetKeyDown(KeyCode.T))
         {
             m_IsTethered = !m_IsTethered;
+            tetheredModeStatus.text = m_IsTethered ? "Tethered Mode (Enabled)" : "Tethered Mode (Disabled)";
         }
         else if (Input.GetKeyDown(KeyCode.C))
         {
@@ -278,26 +338,47 @@ public class Slingshot : MonoBehaviour
                 Camera.main.orthographicSize = m_CameraDynamicSize;
             }
         }
-        if (Input.GetKeyDown(KeyCode.F) && (GameManager.GetState() == GameState.Released))    {
+        else if (Input.GetKeyDown(KeyCode.F) && (GameManager.GetState() == GameState.Released))    {
             m_FiringThrusters = true;
             thrustersStatus.text = "Thrusters (Enabled)";
             m_anchorPointX = m_EndEffectorPosition[0];
             m_anchorPointY = m_EndEffectorPosition[1];
         }
-        else if (Input.GetKeyDown(KeyCode.S))
+        else if (Input.GetKeyDown(KeyCode.S) && (GameManager.GetState() == GameState.Released))
         {
-            //m_FiringThrusters = false;
-            //thrustersStatus.text = "Thrusters (Disabled)";
-            //m_anchorPointX = 0f;
-            //m_anchorPointY = 0f;
+            m_FiringThrusters = false;
+            thrustersStatus.text = "Thrusters (Disabled)";
+            m_anchorPointX = 0f;
+            m_anchorPointY = 0f;
         }
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             if (--cur_cel <= 0) cur_cel += celestials.Length;
+            tetheredModeIndex.text = "Tethered Planet (" + planet_vals[cur_cel].color + ")";
         }
-        if (Input.GetKeyDown(KeyCode.RightArrow))
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             if (++cur_cel >= celestials.Length) cur_cel -= celestials.Length;
+            tetheredModeIndex.text = "Tethered Planet (" + planet_vals[cur_cel].color + ")";
+        }
+        else if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            if (alpha + .05f < 1f) alpha += .05f;
+            alphaStatus.text = "Haptic Alpha: " + alpha.ToString("F2") + " \n0: Only thrusters \n1: Only gravity";
+        }
+        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            if (alpha - .05f > 0f) alpha -= .05f;
+            alphaStatus.text = "Haptic Alpha: " + alpha.ToString("F2") + " \n0: Only thrusters \n1: Only gravity";
+        }
+        else if (Input.GetKeyDown(KeyCode.R) && !m_Reloading)
+        {
+            // reset scene
+            m_Reloading = true;
+            tutorialPromptParent.SetActive(true);
+            tutorialPrompt.text = "Reloading scene... Please don't move or provide any input.";
+            Debug.Log("Calling reload");
+            StartCoroutine(Reload());
         }
     }
     
@@ -368,8 +449,8 @@ public class Slingshot : MonoBehaviour
                 , 0f);
 
             m_EndEffectorStartAvatar.transform.localScale = new Vector3(
-                m_EndEffectorRadius,
-                m_EndEffectorRadius,
+                m_EndEffectorRadius * 4,
+                m_EndEffectorRadius * 4,
                 1f
             );
 
@@ -410,29 +491,50 @@ public class Slingshot : MonoBehaviour
         {
             m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
             m_EndEffectorStartAvatar.enabled = false;
-            m_EndEffectorAvatar.enabled = true;
+            m_EndEffectorArrowAvatar.enabled = true;
             fuelSlider.gameObject.SetActive(true);
         }
         else if (s == GameState.Released)
         {
             //m_DeviceToGraphicsFactor = 1f; // Reduce the amount the end effector moves to provide more convincing thruster physics
-            m_EndEffectorAvatar.transform.position = m_EndEffectorStartAvatar.transform.position;
-            m_CurrentEndEffectorAvatar = m_EndEffectorAvatar;
-            m_EndEffectorStartAvatar.enabled = false;
-            m_EndEffectorAvatar.enabled = true;
-            m_DecoupleEndEffectorFromAvatar = true;
+            //m_DecoupleEndEffectorFromAvatar = true;
+            m_EndEffectorArrowAvatar.enabled = false;
             int LayerAsteroid = LayerMask.NameToLayer("Asteroid");
             m_EndEffectorAvatar.gameObject.layer = LayerAsteroid;
+            m_JustReleased = true;
         }
-        else
+        else if (s == GameState.GameWon)
+        {
+            tutorialPromptParent.SetActive(true);
+            tutorialPrompt.text = "Great job! You won the level, congragulations!";
+            m_JustWonLost = true;
+        }
+        else if (s == GameState.GameLostBoundsExceeded)
+        {
             Debug.Log($"Game Over!");
+            tutorialPromptParent.SetActive(true);
+            tutorialPrompt.text = "You lost due to exceeding the bounds of the level :( Please reset the end effector and click to restart the tutorial!";
+            m_JustWonLost = true;
+        }
+        else if (s == GameState.GameLostFuelDrained)
+        {
+            Debug.Log($"Game Over!");
+            tutorialPromptParent.SetActive(true);
+            tutorialPrompt.text = "You lost due to having no fuel left :( Please reset the end effector and click to restart the tutorial!";
+            m_JustWonLost = true;
+        }
+
+        if (GameManager.GameEnded())
+        {
+            RemoveHapticFeedback();
+        }
     }
 
     #region Drawing
     private void LateUpdate()
     {
-        UpdateEndEffector();
-        if(m_IsCameraDynamic)
+        if (!GameManager.GameEnded()) UpdateEndEffector();
+        if (m_IsCameraDynamic)
         {
             Camera.main.transform.position = new Vector3(m_CurrentEndEffectorAvatar.transform.position.x
                 , m_CurrentEndEffectorAvatar.transform.position.y
@@ -478,6 +580,8 @@ public class Slingshot : MonoBehaviour
 
     private void SimulationStep()
     {
+        if (GameManager.GameEnded()) return;
+
         lock (m_ConcurrentDataLock)
         {
             m_RenderingForce = true;
@@ -498,10 +602,10 @@ public class Slingshot : MonoBehaviour
                         m_EndEffectorForce[0] = 400 * planet_vals[cur_cel].grav.x;
                         m_EndEffectorForce[1] = 400 * planet_vals[cur_cel].grav.y;
                     } else  {
-                        m_EndEffectorForce[0] = 10000 * ship_val.gravitational_forces[0];
-                        m_EndEffectorForce[1] = 10000 * ship_val.gravitational_forces[1];
+                        m_EndEffectorForce[0] = (float) 1e11 * ship_val.gravitational_forces[0];
+                        m_EndEffectorForce[1] = (float)1e11 * ship_val.gravitational_forces[1];
                     }
-                    //Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
+                    Debug.Log(m_EndEffectorForce[0] + " " + m_EndEffectorForce[1]);
 
                 }
                 else if (GameManager.GetState() == GameState.Slingshot)
@@ -523,67 +627,53 @@ public class Slingshot : MonoBehaviour
                     else // vertical wall
                     {
                         m_WallPenetration = new Vector2(
-                            m_WallPosition.x - (m_EndEffectorPosition[0] + m_EndEffectorRadius),
-                            10f * (m_SlingshotRope.midYpos - m_EndEffectorPosition[1] - m_EndEffectorRadius)
+                            m_WallPosition.x - (m_EndEffectorPosition[0] + m_EndEffectorRadius) + .414f,
+                            0f
                         );
-                        // Debug.Log(m_WallPenetration.x);
+                        //Debug.Log(m_WallPenetration.x);
                         if (m_WallPenetration.x < 0f)
                         {
                             m_WallForce += m_WallPenetration * -m_WallStiffness;
+                            Debug.Log(((-m_WorldSize.y / 2f - m_EndEffectorRadius - m_EndEffectorPosition[1]) + .24f) + " " + (m_SlingshotRope.midYpos - m_EndEffectorRadius - m_EndEffectorPosition[1] + .04f));
+                            m_WallForce[1] = (m_SlingshotRope.midYpos - m_EndEffectorRadius - m_EndEffectorPosition[1] + .04f) * -m_WallStiffness;
                         }
-
                     }
-
 
                     m_EndEffectorForce[0] = -m_WallForce[0];
                     m_EndEffectorForce[1] = -m_WallForce[1];
 
                     float timePassed = SlingshotTimer.secondsToRelease - SlingshotTimer.GetSlingshotTimeLeft();
-                    m_EndEffectorForce[0] -= timePassed * (float)m_rand.NextDouble() * 5f;
-                    m_EndEffectorForce[1] -= timePassed * (float)m_rand.NextDouble() * 5f;
+                    m_EndEffectorForce[0] -= timePassed * (float)m_rand.NextDouble() * 10f;
+                    m_EndEffectorForce[1] -= timePassed * (float)m_rand.NextDouble() * 10f;
 
-                    Debug.Log( $"m_EndEffectorForce.x: {m_EndEffectorForce[0]}, m_EndEffectorForce.y: {m_EndEffectorForce[1]}" );
+                    //Debug.Log( $"m_EndEffectorForce.x: {m_EndEffectorForce[0]}, m_EndEffectorForce.y: {m_EndEffectorForce[1]}" );
                 }
                 else if (GameManager.GetState() == GameState.Released)
                 {
-                    m_EndEffectorForce[0] = 0f;
-                    m_EndEffectorForce[1] = 0f;
-                    //Not needed and is it really how a slingshot works?
-                    //should the ship not feel the force slowly dissipase at it is being released by the sling shot?
-
-                    //if (m_JustReleased)
-                    //{
-                    //    //m_JustReleased = false;
-                    //    // m_ReleasedForce[0] = m_EndEffectorForce[0];
-                    //    // m_ReleasedForce[1] = m_EndEffectorForce[1];
-                    //    // m_EndEffectorForce[0] = m_ReleasedForce[0];
-                    //    // m_EndEffectorForce[1] = m_ReleasedForce[1];
-                    //    m_EndEffectorForce[0] = 0f;
-                    //    m_EndEffectorForce[1] = 0f;
-                    //}
-
-                    /* TODO: Adjust Values of Gravity and thrustors*/
                     if (m_FiringThrusters)  {
                         // When thrusters are fired, only render the force caused by them
-                        m_EndEffectorForce[0] = 20 * m_EndEffectorHorizontalThrustForce;
-                        m_EndEffectorForce[1] = 20 * m_EndEffectorVerticalThrustForce;
-                        // m_EndEffectorForce[0] += 20 * m_EndEffectorHorizontalThrustForce*(1-alpha);
-                        // m_EndEffectorForce[1] += 20 * m_EndEffectorVerticalThrustForce*(1-alpha);
+                         m_EndEffectorForce[0] += 20 * m_EndEffectorHorizontalThrustForce * (1 - alpha);
+                        m_EndEffectorForce[1] += 20 * m_EndEffectorVerticalThrustForce * (1 - alpha);
 
-                        m_EndEffectorHorizontalThrustForce *= 0.99f;
-                        m_EndEffectorVerticalThrustForce *= 0.99f;
+                        if (currentFuel / fuel < 0.1f)
+                        {
+                            m_EndEffectorHorizontalThrustForce *= 0.5f * currentFuel / fuel;
+                            m_EndEffectorVerticalThrustForce *= 0.5f * currentFuel / fuel;
+                        }
+                        else
+                        {
+                            m_EndEffectorHorizontalThrustForce *= 0.99f;
+                            m_EndEffectorVerticalThrustForce *= 0.99f;
+                        }
 
                     }
                     else    {
                         m_EndEffectorForce[0] = 0f;
                         m_EndEffectorForce[1] = 0f;
                     }
-                    m_EndEffectorForce[0] += ship_val.gravitational_forces.x*alpha;
-                    m_EndEffectorForce[1] += ship_val.gravitational_forces.y*alpha; 
-                    //else    {
-                    //    m_EndEffectorForce[0] = 0f;
-                    //    m_EndEffectorForce[1] = 0f;
-                    //}
+                    m_EndEffectorForce[0] += (float)1e11 * ship_val.gravitational_forces.x*alpha;
+                    m_EndEffectorForce[1] += (float)1e11 * ship_val.gravitational_forces.y*alpha; 
+                    
 
                     //Debug.Log("End effector (x, y): (" + m_EndEffectorPosition[0] + ", " + m_EndEffectorPosition[1] + ")"  
                 }
@@ -599,8 +689,12 @@ public class Slingshot : MonoBehaviour
             if (m_HapticsOn)
             {
                 m_WidgetOne.SetDeviceTorques(m_EndEffectorForce, m_Torques);
-                m_WidgetOne.DeviceWriteTorques();
             }
+            else
+            {
+                m_WidgetOne.SetDeviceTorques(m_EndEffectorForceZERO, m_Torques);
+            }
+            m_WidgetOne.DeviceWriteTorques();
 
             m_RenderingForce = false;
             m_Steps++;
@@ -612,17 +706,17 @@ public class Slingshot : MonoBehaviour
     /// </summary>
     private void OnDestroy()
     {
-        lock (m_ConcurrentDataLock)
-        {
-            m_WidgetOne.SetDeviceTorques(new float[2] { 0f, 0f }, m_Torques);
-            m_WidgetOne.DeviceWriteTorques();
-        }
+        RemoveHapticFeedback();
+        // Have to unsubscribe, otherwise there will be issues with reloading scene.
+        // https://forum.unity.com/threads/missingreferenceexception-when-scene-is-reloaded.533658/
+        GameManager.OnGameStateChanged -= OnGameStateChanged;
     }
     #endregion
 
     #region Utilities
     private void UpdateEndEffector()
     {
+        if (GameManager.GameEnded()) return;
         //var position = m_EndEffectorAvatar.transform.position;
         var position = new Vector3();
 
@@ -630,7 +724,7 @@ public class Slingshot : MonoBehaviour
         {
             position.x = m_EndEffectorPosition[0]; // Don't need worldPixelWidth/2, because Unity coordinate space is zero'd with display center
             position.y = m_EndEffectorPosition[1]; // Offset is arbitrary to keep end effector avatar inside of workspace
-            Debug.Log("updating end effector graphics " + position.x + " " + position.y);
+            //Debug.Log("updating end effector graphics " + position.x + " " + position.y);
         }
 
         //position *= m_WorldSize.x / 0.24f;
@@ -644,59 +738,94 @@ public class Slingshot : MonoBehaviour
             m_CurrentEndEffectorAvatar.GetComponent<Rigidbody2D>().AddForce(20f * new Vector2(0f, deltaY));
         }
 
-        // float m = Mathf.Max(1.0f, CalculateMagnitude(m_EndEffectorForce));
-        // m_EndEffectorArrowAvatar.transform.localScale = Vector3.Scale(
-        //     m_InitialArrowScale,
-        //     new Vector3(1, m, 1)
-        // );
+        if (!GameManager.GameEnded() &&
+            (Mathf.Abs(m_CurrentEndEffectorAvatar.transform.position.x) > m_MapAbsBound.x ||
+            Mathf.Abs(m_CurrentEndEffectorAvatar.transform.position.y) > m_MapAbsBound.y))
+        {
+            Debug.Log(GameManager.GameEnded());
+            GameManager.UpdateGameState(GameState.GameLostBoundsExceeded);
+        }
 
-        if(GameManager.GetState() == GameState.Freemovement)
+        if (GameManager.GetState() == GameState.Freemovement)
         {
             if(position.x <= m_InitialSpaceshipXPosition)
             {
                 GameManager.UpdateGameState(GameState.Slingshot);
             }
         }
-        else if (GameManager.GetState() == GameState.Released && m_FiringThrusters)
+        else if (GameManager.GetState() == GameState.Slingshot)
         {
-            if (LastPos_x + 0.003 < position.x)
-            {
-                EngineFire_Left.SetActive(true);
-            }
+            xDiff = m_WallPosition[0] - m_CurrentEndEffectorAvatar.transform.position.x;
+            yDiff = (-m_WorldSize.y / 2f - m_EndEffectorRadius) -
+                m_CurrentEndEffectorAvatar.transform.position.y;
+            var angle = Mathf.Atan2(yDiff, xDiff) - Mathf.PI / 4f;
+            m_EndEffectorArrowAvatar.transform.localRotation =
+                UnityEngine.Quaternion.AngleAxis(angle * Mathf.Rad2Deg, Vector3.forward);
+            m_EndEffectorArrowAvatar.transform.localPosition = new Vector3(
+                4f * Mathf.Cos(angle),
+                4f * Mathf.Sin(angle),
+                0f
+                );
 
-            else if (LastPos_x == position.x)
+            float forceMag = Vector2.SqrMagnitude(new Vector2(xDiff, yDiff));
+            //Debug.Log(forceMag);
+            float m = forceMag * 15f + .8f;
+            m_EndEffectorArrowAvatar.transform.localScale = Vector3.Scale(
+                m_InitialArrowScale,
+                new Vector3(m, m, 1)
+            );
+        }
+        else if (GameManager.GetState() == GameState.Released)
+        {
+            if (m_FiringThrusters)
             {
+                if (LastPos_x + 0.009 < position.x)
+                {
+                    EngineFire_Left.SetActive(true);
+                }
+
+                else if (LastPos_x == position.x)
+                {
+                    EngineFire_Left.SetActive(false);
+                    EngineFire_Right.SetActive(false);
+                }
+
+                else if (LastPos_x - 0.009 > position.x)
+                {
+                    EngineFire_Right.SetActive(true);
+                }
+
+
+                if (LastPos_y - 0.009 > position.y)
+                {
+                    EngineFire_Up.SetActive(true);
+                }
+
+                else if (LastPos_y == position.y)
+                {
+                    EngineFire_Up.SetActive(false);
+                    EngineFire_Down.SetActive(false);
+                }
+
+                else if (LastPos_y + 0.009 < position.y)
+                {
+                    EngineFire_Down.SetActive(true);
+                }
+
+                m_EndEffectorHorizontalThrustForce = m_thrusterStiffness * (position.x - m_anchorPointX);
+                m_EndEffectorVerticalThrustForce = m_thrusterStiffness * (position.y - m_anchorPointY);
+
+            }
+            else
+            {
+                EngineFire_Down.SetActive(false);
+                EngineFire_Up.SetActive(false);
                 EngineFire_Left.SetActive(false);
                 EngineFire_Right.SetActive(false);
             }
 
-            else if (LastPos_x - 0.003 > position.x)
-            {
-                EngineFire_Right.SetActive(true);
-            }
 
-
-            if (LastPos_y - 0.003 > position.y)
-            {
-                EngineFire_Up.SetActive(true);
-            }
-
-            else if (LastPos_y == position.y)
-            {
-                EngineFire_Up.SetActive(false);
-                EngineFire_Down.SetActive(false);
-            }
-
-            else if (LastPos_y + 0.003 < position.y)
-            {
-                EngineFire_Down.SetActive(true);
-            }
-
-            m_EndEffectorHorizontalThrustForce = m_thrusterStiffness * (position.x - m_anchorPointX);
-            m_EndEffectorVerticalThrustForce = m_thrusterStiffness * (position.y - m_anchorPointY);
-
-
-            if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.005)   {
+            if (Vector2.Distance(m_CurrentEndEffectorAvatar.transform.position, m_Destination.transform.position) < 0.02)   {
                 Debug.Log("Game Won!");
                 GameManager.UpdateGameState(GameState.GameWon);
             }
@@ -734,6 +863,24 @@ public class Slingshot : MonoBehaviour
         // choose -149 instead of -126 to also generate subnormal floats (*)
         double exponent = System.Math.Pow(2.0, random.Next(-126, 128));
         return (float)(mantissa * exponent);
+    }
+
+    private IEnumerator Reload()
+    {
+        //Debug.Log("Reloading scene");
+        yield return new WaitForSeconds(3);
+        SceneManager.UnloadSceneAsync(SceneManager.GetActiveScene().buildIndex);
+        Resources.UnloadUnusedAssets();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex, LoadSceneMode.Single);
+    }
+
+    private void RemoveHapticFeedback()
+    {
+        lock (m_ConcurrentDataLock)
+        {
+            m_WidgetOne.SetDeviceTorques(new float[2] { 0f, 0f }, m_Torques);
+            m_WidgetOne.DeviceWriteTorques();
+        }
     }
     #endregion
 }

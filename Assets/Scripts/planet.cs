@@ -8,6 +8,6 @@ public class planet : MonoBehaviour
 
     public Vector2 vel;
     public Vector2 grav;
-
+    public string color;
 
 }
